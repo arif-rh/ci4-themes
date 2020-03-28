@@ -555,7 +555,7 @@ class Themes
 		{
 			$this->setVar('page_title', $page_title['page_title']);
 		}
-		elseif (!array_key_exists('page_title', self::themeVars)) 
+		elseif (!array_key_exists('page_title', self::$themeVars)) 
 		{
 			// page_title is not defined, so detect current controller/method as page title
 			$router = service('router');
