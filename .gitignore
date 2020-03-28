@@ -1,0 +1,9 @@
+.vscode
+
+vendor/
+docs/
+build/
+
+composer.lock
+phpdoc.xml
+docs.bat

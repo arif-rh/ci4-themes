@@ -1,0 +1,25 @@
+{
+	"name": "arif-rh/ci4-themes",
+	"description": "Theme management for CodeIgniter 4",
+	"keywords": [
+		"codeigniter",
+		"codeigniter4",
+		"themes",
+		"CI Theme"
+	],
+	"homepage": "https://github.com/arif-rh/ci4-themes",
+	"license": "MIT",
+	"authors": [
+		{
+			"name": "Arif RH",
+			"email": "arifrahmanhakim.net@gmail.com",
+			"homepage": "https://github.com/arif-rh",
+			"role": "Developer"
+		}
+	],
+	"autoload": {
+		"psr-4": {
+			"Arifrh\\Themes\\": "src"
+		}
+	}
+}
