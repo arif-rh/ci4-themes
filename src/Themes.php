@@ -345,13 +345,14 @@ class Themes
 		}
 
 		$objTheme = self::$instance;
+		$objTheme->setvar($data);
 
 		if (!$objTheme->templateExist(self::$config['template']))
 		{
 			throw ThemesException::forMissingTemplateView(self::$config['template']);
 		}
 
-		$objTheme->setContent($viewPath, $data);
+		$objTheme->setContent($viewPath, $objTheme::getData());
 
 		// use custom view using theme path
 		$view_config = Config('View');
@@ -532,10 +533,6 @@ class Themes
 
 			if (!empty($view))
 			{
-				// merge themeVars so it will be availble in injected view
-				$themeVars = self::getData();
-				$data      = array_merge($themeVars, $data);
-
 				$content = view($viewPath, $data);
 			}
 		}
