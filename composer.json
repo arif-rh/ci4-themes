@@ -21,5 +21,8 @@
 		"psr-4": {
 			"Arifrh\\Themes\\": "src"
 		}
-	}
+	},
+	"suggest": {
+        "arif-rh/ci4-themes-material-kit": "Use Bootstrap 4 Material Design Kit for your theme"
+    }
 }
