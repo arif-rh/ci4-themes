@@ -27,3 +27,36 @@ if (! function_exists('validate_ext'))
 		return empty($fileExt) ? $file . $ext : $file; 
 	}
 }
+
+if (! function_exists('theme_url'))
+{
+	// return full path from active theme URL
+	function theme_url($path = null)
+	{
+		$themeVars = Arifrh\Themes\Themes::getData();
+
+		return $themeVars['theme_url'] . (is_string($path) ? $path : '');
+	}
+}
+
+if (! function_exists('image_url'))
+{
+	// return full path to image URL in active theme
+	function image_url($path = null)
+	{
+		$themeVars = Arifrh\Themes\Themes::getData();
+
+		return $themeVars['image_url'] . (is_string($path) ? $path : '');
+	}
+}
+
+if (! function_exists('plugin_url'))
+{
+	// return full path to plugin URL in active theme
+	function plugin_url($path = null)
+	{
+		$themeVars = Arifrh\Themes\Themes::getData();
+
+		return $themeVars['plugin_url'] . (is_string($path) ? $path : '');
+	}
+}
