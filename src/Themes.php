@@ -358,7 +358,7 @@ class Themes
 
 		$view = new \CodeIgniter\View\View($view_config, FCPATH . self::$config['theme_path'] . '/' . self::$config['theme'] . '/');
 
-		$view->setData($objTheme->getData());
+		$view->setData($objTheme::getData());
 
 		if (self::$config['use_full_template'])
 		{
@@ -532,6 +532,10 @@ class Themes
 
 			if (!empty($view))
 			{
+				// merge themeVars so it will be availble in injected view
+				$themeVars = self::getData();
+				$data      = array_merge($themeVars, $data);
+
 				$content = view($viewPath, $data);
 			}
 		}
