@@ -1,3 +1,7 @@
+# CodeIgniter 4 Themes
+
+[![Build Status](https://travis-ci.com/arif-rh/ci4-themes.svg?branch=master)](https://travis-ci.com/arif-rh/ci4-themes)   [![Coverage Status](https://coveralls.io/repos/github/arif-rh/ci4-themes/badge.svg)](https://coveralls.io/github/arif-rh/ci4-themes)
+
 ## Installation
 
 1. install via composer, run `composer require arif-rh/ci4-themes`
@@ -26,26 +30,30 @@ public/
 
 ## Table of Contents
 
-* [Arifrh\Themes\Config\Themes](#themes-config)
-* [Arifrh\Themes\Themes](#themes)
-    * [**static** init](#init)
-    * [addCSS](#addcss)
-    * [addJS](#addjs)
-    * [addInlineJS](#addinlinejs)
-    * [addExternalCSS](#addexternalcss)
-    * [addExternalJS](#addexternaljs)
-    * [loadPlugins](#loadplugins)
-    * [useFullTemplate](#usefulltemplate)
-    * [setHeader](#setheader)
-    * [setTemplate](#settemplate)
-    * [setFooter](#setfooter)
-    * [setTheme](#settheme)
-    * [**static** render](#render)
-    * [**static** renderCSS](#rendercss)
-    * [**static** renderJS](#renderjs)
-    * [setPageTitle](#setpagetitle)
-    * [setVar](#setvar)
-    * [**static** getData](#getdata)
+- [CodeIgniter 4 Themes](#codeigniter-4-themes)
+  - [Installation](#installation)
+- [CI4 Themes Documentation](#ci4-themes-documentation)
+  - [Table of Contents](#table-of-contents)
+- [Themes Config](#themes-config)
+  - [Themes](#themes)
+    - [init](#init)
+    - [addCSS](#addcss)
+    - [addJS](#addjs)
+    - [addInlineJS](#addinlinejs)
+    - [addExternalCSS](#addexternalcss)
+    - [addExternalJS](#addexternaljs)
+    - [loadPlugins](#loadplugins)
+    - [useFullTemplate](#usefulltemplate)
+    - [setHeader](#setheader)
+    - [setTemplate](#settemplate)
+    - [setFooter](#setfooter)
+    - [setTheme](#settheme)
+    - [render](#render)
+    - [renderCSS](#rendercss)
+    - [renderJS](#renderjs)
+    - [setPageTitle](#setpagetitle)
+    - [setVar](#setvar)
+    - [getData()](#getdata)
 
 # Themes Config
 

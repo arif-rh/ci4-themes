@@ -33,3 +33,6 @@ script:
 before_script:
   - echo 'extension = memcached.so' >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
   - composer install --prefer-source
+
+after_success:
+  - travis_retry php vendor/bin/php-coveralls -v
