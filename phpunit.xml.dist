@@ -9,20 +9,24 @@
         stopOnFailure="false"
         stopOnIncomplete="false"
         stopOnSkipped="false">
+
     <testsuites>
-        <testsuite name="app">
+        <testsuite name="themes">
             <directory>./tests</directory>
         </testsuite>
     </testsuites>
+
     <filter>
         <whitelist processUncoveredFilesFromWhitelist="true">
-            <directory suffix="*Test.php">./src</directory>
+            <directory suffix=".php">./src</directory>
         </whitelist>
     </filter>
+
     <logging>
         <log type="coverage-clover" target="build/logs/clover.xml"/>
         <log type="coverage-html" target="build/html"/>
     </logging>
+
     <php>
         <env name="app.baseURL" value="http://example.com"/>
 
@@ -33,7 +37,10 @@
 		<const name="CONFIGPATH" value="vendor/codeigniter4/framework/app/Config/"/>
 
 		<!-- Directory containing the front controller (index.php) -->
-		<const name="PUBLICPATH" value="vendor/codeigniter4/framework/public/"/>
+		<const name="PUBLICPATH" value="tests/fixtures/public/"/>
+
+        <!-- CI DEBUG -->
+		<const name="CI_DEBUG" value="false"/>
     </php>
 
 </phpunit>
