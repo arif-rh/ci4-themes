@@ -66,6 +66,8 @@ class Themes
 			$config = config('Themes');
 		}
 
+		self::$instance::$themeVars = null;
+
 		self::$config = (array) $config;
 
 		self::$instance->setTheme(self::$config['theme']);
@@ -88,13 +90,11 @@ class Themes
 		{
 			$css = trim($css);
 
-			if (empty($css))
+			if (!empty($css))
 			{
-				continue;
-			}
-
-			// set unique key-index to prevent duplicate css being included
-			self::$themeVars['css_themes'][sha1($css)] = $css;
+				// set unique key-index to prevent duplicate css being included
+				self::$themeVars['css_themes'][sha1($css)] = $css;
+			}			
 		}
 
 		return $this;
@@ -115,13 +115,11 @@ class Themes
 		{
 			$js = trim($js);
 
-			if (empty($js))
+			if (!empty($js))
 			{
-				continue;
+				// set unique key-index to prevent duplicate js being included
+				self::$themeVars['js_themes'][sha1($js)] = $js;
 			}
-
-			// set unique key-index to prevent duplicate js being included
-			self::$themeVars['js_themes'][sha1($js)] = $js;
 		}
 
 		return $this;
@@ -161,12 +159,10 @@ class Themes
 		{
 			$css = trim($css);
 
-			if (empty( $css ))
+			if (!empty( $css ))
 			{
-				continue;
+				self::$themeVars['external_css'][sha1($css)] = $css;
 			}
-
-			self::$themeVars['external_css'][sha1($css)] = $css;
 		}
 
 		return $this;
@@ -187,12 +183,10 @@ class Themes
 		{
 			$js = trim($js);
 
-			if (empty($js))
+			if (!empty($js))
 			{
-				continue;
+				self::$themeVars['external_js'][sha1($js)] = $js;
 			}
-
-			self::$themeVars['external_js'][sha1($js)] = $js;
 		}
 
 		return $this;
@@ -213,28 +207,26 @@ class Themes
 		{
 			$plugin = trim($plugin);
 
-			if (empty($plugin))
+			if (!empty($plugin))
 			{
-				continue;
-			}
-
-			if (!array_key_exists($plugin, self::$config['plugins']))
-			{
-				throw ThemesException::forPluginNotRegistered($plugin);
-			}
-
-			foreach(self::$config['plugins'][$plugin] as $type => $plugin_files)
-			{
-				foreach($plugin_files as $plugin_file)
+				if (!array_key_exists($plugin, self::$config['plugins']))
 				{
-					$plugin_path = str_replace(base_url(), FCPATH, self::$themeVars['plugin_url']);
+					throw ThemesException::forPluginNotRegistered($plugin);
+				}
 
-					if (!file_exists($plugin_path . $plugin_file))
+				foreach(self::$config['plugins'][$plugin] as $type => $plugin_files)
+				{
+					foreach($plugin_files as $plugin_file)
 					{
-						throw ThemesException::forPluginNotFound($plugin_file);
-					}
+						$plugin_path = str_replace(base_url(), FCPATH, self::$themeVars['plugin_url']);
 
-					self::$themeVars['loaded_plugins'][$type][] = self::$themeVars['plugin_url'] . $plugin_file;
+						if (!file_exists($plugin_path . $plugin_file))
+						{
+							throw ThemesException::forPluginNotFound($plugin_file);
+						}
+
+						self::$themeVars['loaded_plugins'][$type][] = self::$themeVars['plugin_url'] . $plugin_file;
+					}
 				}
 			}
 		}
@@ -397,8 +389,10 @@ class Themes
 
 				if (file_exists($css_file))
 				{
+					$latest_version = filemtime($css_file);
+
 					$css_file   = str_replace(FCPATH, '', $css_file);
-					$latest_css = base_url($css_file . '?v=' . filemtime($css_file));
+					$latest_css = base_url($css_file . '?v=' . $latest_version);
 
 					echo link_tag($latest_css);
 				}
@@ -443,8 +437,10 @@ class Themes
 
 				if (file_exists($js_file))
 				{
+					$latest_version = filemtime($js_file);
+					
 					$js_file   = str_replace(FCPATH, '', $js_file);
-					$latest_js = base_url($js_file . '?v=' . filemtime($js_file));
+					$latest_js = base_url($js_file . '?v=' . $latest_version);
 
 					echo script_tag($latest_js);
 				}
@@ -497,11 +493,6 @@ class Themes
  	*/
 	protected function templateExist($template = null)
 	{
-		if (empty($template))
-		{
-			return false;
-		}
-
 		helper('themes');
 
 		return file_exists(FCPATH . self::$config['theme_path'] . '/' . self::$config['theme'] . '/' . validate_ext($template));
@@ -513,15 +504,13 @@ class Themes
 	 * @param string $viewPath
 	 * @param array  $data
 	 */
-	protected function setContent($viewPath = null, $data = [])
+	protected function setContent($viewPath = null, $data = [], $viewDir = 'Views')
 	{
+		$content = "";
+
 		if (is_string($viewPath))
 		{
 			$content = $viewPath; 
-		}
-		else
-		{
-			$content = "";
 		}
 
 		if (!empty($viewPath))
@@ -529,7 +518,7 @@ class Themes
 			$fileExt = pathinfo($viewPath, PATHINFO_EXTENSION);
 
 			$locator = \Config\Services::locator();
-			$view    = $locator->locateFile($viewPath, 'Views', empty($fileExt) ? 'php' : $fileExt);
+			$view    = $locator->locateFile($viewPath, $viewDir, empty($fileExt) ? 'php' : $fileExt);
 
 			if (!empty($view))
 			{
@@ -559,17 +548,26 @@ class Themes
 		elseif (!array_key_exists('page_title', self::$themeVars)) 
 		{
 			// page_title is not defined, so detect current controller/method as page title
-			$router = service('router');
+			//$router = service('router');
+			$moduleConfig  = new \Config\Modules;
+			$collection    = new \CodeIgniter\Router\RouteCollection(\CodeIgniter\Config\Services::locator(), $moduleConfig);
 
-			$namespace_controller  = $router->controllerName();
-			
-			$controllers = explode('\\', $namespace_controller);
+			$request = \CodeIgniter\Config\Services::request();
 
-			$controller  = $controllers[count($controllers)-1];
+			$router = new \CodeIgniter\Router\Router($collection, $request);
 
-			$method = $router->methodName();
+			if ($router instanceof \CodeIgniter\Router\Router)
+			{
+				$namespace_controller  = $router->controllerName();
+				
+				$controllers = explode('\\', $namespace_controller);
 
-			$this->setVar('page_title', $controller . ' | ' . ucfirst($method));
+				$controller  = $controllers[count($controllers)-1];
+
+				$method = $router->methodName();
+
+				$this->setVar('page_title', $controller . ' | ' . ucfirst($method));
+			}
 		}
 
 		return $this;
@@ -619,5 +617,15 @@ class Themes
 	public static function getData(): array
 	{
 		return self::$themeVars;
+	}
+
+	/**
+	 * Get All Themes Configs
+	 * 
+	 * @return array
+	 */
+	public static function getConfig(): array
+	{
+		return self::$config;
 	}
 }
