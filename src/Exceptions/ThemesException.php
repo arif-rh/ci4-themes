@@ -5,11 +5,6 @@ use CodeIgniter\Exceptions\FrameworkException;
 
 class ThemesException extends FrameworkException implements ExceptionInterface
 {
-	public static function forInvalidTemplate(string $template = null)
-	{
-		return new static(lang('Themes.invalidTemplate', [$template]));
-	}
-
 	public static function forMissingTemplateView(string $template = null)
 	{
 		return new static(lang('Themes.missingTemplateView', [$template]));
