@@ -19,10 +19,20 @@
 	],
 	"autoload": {
 		"psr-4": {
-			"Arifrh\\Themes\\": "src"
+			"Arifrh\\Themes\\": "src",
+			"Arifrh\\ThemesTest\\": "tests"
 		}
 	},
 	"suggest": {
         "arif-rh/ci4-themes-material-kit": "Use Bootstrap 4 Material Design Kit for your theme"
-    }
+    },
+	"require-dev": {
+		"mikey179/vfsstream": "1.6.*",
+		"phpunit/phpunit": "^8",
+		"codeigniter4/framework": "dev-master"
+	},
+	"scripts": {
+		"test": "vendor\\bin\\phpunit tests",
+		"testdox": "vendor\\bin\\phpunit --testdox tests"
+	}
 }
