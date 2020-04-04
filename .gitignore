@@ -4,6 +4,6 @@ vendor/
 docs/
 build/
 
+phpunit.xml
 composer.lock
-phpdoc.xml
-docs.bat
+*.cache
