@@ -1,6 +1,6 @@
 # CodeIgniter 4 Themes
 
-[![Build Status](https://travis-ci.com/arif-rh/ci4-themes.svg?branch=master)](https://travis-ci.com/arif-rh/ci4-themes)   [![Coverage Status](https://coveralls.io/repos/github/arif-rh/ci4-themes/badge.svg)](https://coveralls.io/github/arif-rh/ci4-themes)
+[![Build Status](https://travis-ci.com/arif-rh/ci4-themes.svg?branch=master)](https://travis-ci.com/arif-rh/ci4-themes)   [![Coverage Status](https://coveralls.io/repos/github/arif-rh/ci4-themes/badge.svg)](https://coveralls.io/github/arif-rh/ci4-themes)  [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=arif-rh_ci4-themes&metric=alert_status)](https://sonarcloud.io/dashboard?id=arif-rh_ci4-themes)  [![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=arif-rh_ci4-themes&metric=vulnerabilities)](https://sonarcloud.io/dashboard?id=arif-rh_ci4-themes)  [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=arif-rh_ci4-themes&metric=security_rating)](https://sonarcloud.io/dashboard?id=arif-rh_ci4-themes)  [![Bugs](https://sonarcloud.io/api/project_badges/measure?project=arif-rh_ci4-themes&metric=bugs)](https://sonarcloud.io/dashboard?id=arif-rh_ci4-themes)  [![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=arif-rh_ci4-themes&metric=sqale_rating)](https://sonarcloud.io/dashboard?id=arif-rh_ci4-themes)
 
 ## Installation
 
