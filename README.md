@@ -505,6 +505,9 @@ Themes::init()
     ->setTheme('frontend');
 ```
 
+**Note**: 
+- This change theme on-the-fly only work if you have same folder structures and template name accross your themes.
+- If your themes have different structure and/or template name, use `init($config)` instead.
 
 
 ---
