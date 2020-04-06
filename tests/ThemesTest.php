@@ -42,7 +42,7 @@ final class ThemesTest extends TestCase
         );
     }
 
-    public function testAddSingleCssUsingString()
+    public function testAddSingleCss()
     {
         $css = "style.css";
 
@@ -50,23 +50,20 @@ final class ThemesTest extends TestCase
 
         $themeVars = $this->themes::getData();
 
-        $this->assertArrayHasKey('css_themes', $themeVars);
-        $this->assertCount(1, $themeVars['css_themes']);
-    }
+        $this->assertCount(1, $themeVars[$this->themes::CSS_THEME]);
+    
+        // add css using array
 
-    public function testAddSingleCssUsingArray()
-    {
-        $css = ["style.css"];
+        $css = [$css];
 
         $this->themes->addCSS($css);
 
         $themeVars = $this->themes::getData();
 
-        $this->assertArrayHasKey('css_themes', $themeVars);
-        $this->assertCount(1, $themeVars['css_themes']);
+        $this->assertCount(1, $themeVars[$this->themes::CSS_THEME]);
     }
 
-    public function testAddMultipleCssUsingString()
+    public function testAddMultipleCss()
     {
         $css = "style.css, style-2.css";
 
@@ -74,20 +71,17 @@ final class ThemesTest extends TestCase
 
         $themeVars = $this->themes::getData();
 
-        $this->assertArrayHasKey('css_themes', $themeVars);
-        $this->assertCount(2, $themeVars['css_themes']);
-    }
+        $this->assertCount(2, $themeVars[$this->themes::CSS_THEME]);
+   
+        // add multiple css using array
 
-    public function testAddMultipleCssUsingArray()
-    {
-        $css = ["style.css", "style-2.css"];
+        $css = explode(",", $css);
 
         $this->themes->addCSS($css);
 
         $themeVars = $this->themes::getData();
 
-        $this->assertArrayHasKey('css_themes', $themeVars);
-        $this->assertCount(2, $themeVars['css_themes']);
+        $this->assertCount(2, $themeVars[$this->themes::CSS_THEME]);
     }
 
     public function testAddJs()
@@ -97,8 +91,7 @@ final class ThemesTest extends TestCase
 
         $themeVars = $this->themes::getData();
 
-        $this->assertArrayHasKey('js_themes', $themeVars);
-        $this->assertContains($js, $themeVars['js_themes']);
+        $this->assertContains($js, $themeVars[$this->themes::JS_THEME]);
     }
 
     public function testAddInlineJs()
@@ -108,8 +101,7 @@ final class ThemesTest extends TestCase
 
         $themeVars = $this->themes::getData();
 
-        $this->assertArrayHasKey('inline_js', $themeVars);
-        $this->assertContains($inlineJs, $themeVars['inline_js']);
+        $this->assertContains($inlineJs, $themeVars[$this->themes::INLINE_JS]);
     }
 
     public function testAddExternalCss()
@@ -120,8 +112,7 @@ final class ThemesTest extends TestCase
 
         $themeVars = $this->themes::getData();
 
-        $this->assertArrayHasKey('external_css', $themeVars);
-        $this->assertCount(1, $themeVars['external_css']);
+        $this->assertCount(1, $themeVars[$this->themes::EXTERNAL_CSS]);
     }
 
     public function testAddExternalJs()
@@ -132,8 +123,7 @@ final class ThemesTest extends TestCase
 
         $themeVars = $this->themes::getData();
 
-        $this->assertArrayHasKey('external_js', $themeVars);
-        $this->assertCount(1, $themeVars['external_js']);
+        $this->assertCount(1, $themeVars[$this->themes::EXTERNAL_JS]);
     }
 
     public function testSetHeader()
@@ -180,13 +170,13 @@ final class ThemesTest extends TestCase
 
     public function testSetVar()
     {
-        $page_title = "Test Page Title";
+        $package_name = "ci4-themes";
 
-        $this->themes->setVar('page_title', $page_title);
+        $this->themes->setVar('package_name', $package_name);
 
         $themeVars = $this->themes::getData();
 
-        $this->assertEquals($page_title, $themeVars['page_title']);
+        $this->assertEquals($package_name, $themeVars['package_name']);
     }
 
     public function testSetPageTitle()
@@ -197,14 +187,14 @@ final class ThemesTest extends TestCase
 
         $themeVars = $this->themes::getData();
 
-        $this->assertEquals($page_title, $themeVars['page_title']);
+        $this->assertEquals($page_title, $themeVars[$this->themes::PAGE_TITLE]);
 
         // test using array
         $this->themes->setPageTitle(['page_title' => $page_title]);
 
         $themeVars = $this->themes::getData();
 
-        $this->assertEquals($page_title, $themeVars['page_title']);
+        $this->assertEquals($page_title, $themeVars[$this->themes::PAGE_TITLE]);
     }
 
     public function testUsingCustomConfig()
@@ -286,7 +276,9 @@ final class ThemesTest extends TestCase
        $pluginCss = $this->themes::getConfig()['plugins'][$plugin]['css'];
 
        foreach($pluginCss as $css)
+       {
            $this->assertStringContainsString($css, $renderCSS);
+       }
     }
 
     public function testRenderJs()
@@ -316,7 +308,9 @@ final class ThemesTest extends TestCase
        $pluginJs = $this->themes::getConfig()['plugins'][$plugin]['js'];
 
        foreach($pluginJs as $js)
+       {
            $this->assertStringContainsString($js, $renderJS);
+       }
     }
 
     public function testRenderMissingTemplate()
@@ -324,15 +318,15 @@ final class ThemesTest extends TestCase
         $this->expectException(Arifrh\Themes\Exceptions\ThemesException::class);
 
         $this->themes->setTemplate('non-exist-template');
-		$this->themes::render('hello world!');
+		$this->themes::render('This will never be rendered');
     }
 
     public function testRenderString()
     {
-        $expected = "hello world!";
+        $expected = "Hello World!";
 
         ob_start();
-		$this->themes::render('hello world!');
+		$this->themes::render($expected);
 		$renderString = ob_get_contents();
         @ob_end_clean();
         
@@ -344,26 +338,11 @@ final class ThemesTest extends TestCase
 
     public function testRenderUsingFullTemplate()
     {
-        $expected = "hello world!";
+        $expected = "Login Page";
 
         ob_start();
         $this->themes->useFullTemplate();
-		$this->themes::render('hello world!');
-		$renderString = ob_get_contents();
-        @ob_end_clean();
-        
-        $this->assertStringContainsString(
-            $expected,
-            $renderString
-        );
-    }
-
-    public function testRenderStringFromEmptyInstance()
-    {
-        $expected = "hello world!";
-
-        ob_start();
-		$this->themes::render('hello world!');
+		$this->themes::render($expected);
 		$renderString = ob_get_contents();
         @ob_end_clean();
         
