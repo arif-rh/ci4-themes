@@ -21,18 +21,18 @@ cache:
   directories:
     - vendor
 
-addons:
-  sonarcloud:
-    organization: "arifrh"
-    token:
-      secure: "HmT6rHX4EUI5KEb82LsCuEhTwMPwQXkv4DENKpMFriTxc+VjeaVHxBxkZUKY1lcNkLLFm39djVlc+mOq4riCyTxyiU4cbW11YmV6oEe31tzzv/N8c7OBFidMc9jtbkaf460rA4rosFA3E6w08ouIaUV5snmumkKSvjPZ2edNYbqVgk6ZXRazZB8hj2kpxroCSNkRxnRBAYq4tvfaSZLLyUlxhLp5FhTfRiQw6OQQB3sKLedxT/Ht/7K9qpppmoq1a+jugvmlU/QI6kQBd93oKp6E42JOnfYBxHPn6IyQfsdZsshwMAUapcarlrSlLudQNmukFZ+k/hFf+ofaMWRiYrbWsDp6CDcEuQ5p40tonhyub64FKIHSIJyi3dwPK+6cKFPxSE0gMoAq7t267r7S8tKEOTiT+WMryzqkzjmtJvedrQ4Nxs0QPTSxms0040n+tGKyzpVFiwLy8/S1TX6tMWrmTEL5iVFwsml5Zq8/sJhpHwDL3Fc3jJOSIY+tQrxY7SKxdelktC7D8lZdyzjkoqR9tX1V8tSG1FS675vVa1wAcxCHnZOIXOt326QQEAF0JL9zRC45faqtc9qKiDyJmmylLH7Hxiv3WfSoWp5mxNxpQVLReJigrtfGo1V4WZbNqxSjnwu4oZvIGZAUlgVSI1zGISjd8P4EDrCjPkki3k0="
+#addons:
+#  sonarcloud:
+#    organization: "arifrh"
+#    token:
+#      secure: "HmT6rHX4EUI5KEb82LsCuEhTwMPwQXkv4DENKpMFriTxc+VjeaVHxBxkZUKY1lcNkLLFm39djVlc+mOq4riCyTxyiU4cbW11YmV6oEe31tzzv/N8c7OBFidMc9jtbkaf460rA4rosFA3E6w08ouIaUV5snmumkKSvjPZ2edNYbqVgk6ZXRazZB8hj2kpxroCSNkRxnRBAYq4tvfaSZLLyUlxhLp5FhTfRiQw6OQQB3sKLedxT/Ht/7K9qpppmoq1a+jugvmlU/QI6kQBd93oKp6E42JOnfYBxHPn6IyQfsdZsshwMAUapcarlrSlLudQNmukFZ+k/hFf+ofaMWRiYrbWsDp6CDcEuQ5p40tonhyub64FKIHSIJyi3dwPK+6cKFPxSE0gMoAq7t267r7S8tKEOTiT+WMryzqkzjmtJvedrQ4Nxs0QPTSxms0040n+tGKyzpVFiwLy8/S1TX6tMWrmTEL5iVFwsml5Zq8/sJhpHwDL3Fc3jJOSIY+tQrxY7SKxdelktC7D8lZdyzjkoqR9tX1V8tSG1FS675vVa1wAcxCHnZOIXOt326QQEAF0JL9zRC45faqtc9qKiDyJmmylLH7Hxiv3WfSoWp5mxNxpQVLReJigrtfGo1V4WZbNqxSjnwu4oZvIGZAUlgVSI1zGISjd8P4EDrCjPkki3k0="
 
-jdk:
-  - oraclejdk8
+#jdk:
+#  - oraclejdk8
 
 script:
   - php vendor/bin/phpunit -v
-  - sonar-scanner
+#  - sonar-scanner
 
 before_script:
   - echo 'extension = memcached.so' >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
