@@ -11,13 +11,7 @@ matrix:
   allow_failures:
     - php: nightly
 
-global:
-  - CI=true
-  - CI_ENVIRONMENT=testing
-
-# Recommended by Travis support
-sudo: required
-dist: xenial
+dist: trusty
 group: edge
 
 services:
@@ -27,7 +21,15 @@ cache:
   directories:
     - vendor
 
+addons:
+  sonarcloud:
+    organization: "arifrh"
+    token:
+      secure: "JaGxevS44kXrgWwXof/b8lykMj7YBja/mH0Jw0k8J89nck290ZHHI6Y/i1pFvXiNPJFl61zRBOnUvVgqMRCodcu/BIrEwpnCV8HNE3GjoIiaJsM4H5wge5YLpnBDZsZnTEoh/eT4qMRwv4+raIBh6D0ARjA/LSBJjqoautTBd5AcIZTCGHDFJJXfnctj0vpfgNkuafMVk1hMxnXg2dibNthP6IdWnVoYMewsVIM4AAJhBJDRa0nlM3KGw7bSBHSZk6TGDFo12v07JwfbT1ixBhzGWNNhHRRL0ZIi13SRA8+AqfAdFRq6ZxZFRR9cpxQ5+hHTqjXNRa/KfBO86U3G0zt0hlZ8kX6zU3EiyvWehoLDTOBPGeW1Y+70mofiPEUS5f77LrkuBSPp1mvSP76QNhx4FMiUwGZEBswR7f5LRBcPVBjDWU8cW7CKEgiolsHnKhoyPQIfBnU8a80yasAvDyPPJLj2hNTJIc6VQEq6GTar5hcjqF/9yip5vwL+niQ/EbKjlJr/M6+zg4TPVlJSGe2MtDBlrRS3w55T66sYyPMZZxz7RJmSKAnPFvp5OHOpAOY1k0P9hadfsBSFx/HQto8C9vt1wnkA2bmyX3ozqfHCVAnJEDcA6ZcKbRnNSIEGvQBakXKy4Po6Vl8p0QXo/lsW3dI4DuO0K8K2ANvEWtE=" 
+
 script:
+  # the following command line builds the project, runs the tests with coverage and then execute the SonarCloud analysis
+  - sonar-scanner
   - php vendor/bin/phpunit -v
 
 before_script:
