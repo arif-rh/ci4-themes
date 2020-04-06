@@ -25,12 +25,11 @@ addons:
   sonarcloud:
     organization: "arifrh"
     token:
-      secure: "JaGxevS44kXrgWwXof/b8lykMj7YBja/mH0Jw0k8J89nck290ZHHI6Y/i1pFvXiNPJFl61zRBOnUvVgqMRCodcu/BIrEwpnCV8HNE3GjoIiaJsM4H5wge5YLpnBDZsZnTEoh/eT4qMRwv4+raIBh6D0ARjA/LSBJjqoautTBd5AcIZTCGHDFJJXfnctj0vpfgNkuafMVk1hMxnXg2dibNthP6IdWnVoYMewsVIM4AAJhBJDRa0nlM3KGw7bSBHSZk6TGDFo12v07JwfbT1ixBhzGWNNhHRRL0ZIi13SRA8+AqfAdFRq6ZxZFRR9cpxQ5+hHTqjXNRa/KfBO86U3G0zt0hlZ8kX6zU3EiyvWehoLDTOBPGeW1Y+70mofiPEUS5f77LrkuBSPp1mvSP76QNhx4FMiUwGZEBswR7f5LRBcPVBjDWU8cW7CKEgiolsHnKhoyPQIfBnU8a80yasAvDyPPJLj2hNTJIc6VQEq6GTar5hcjqF/9yip5vwL+niQ/EbKjlJr/M6+zg4TPVlJSGe2MtDBlrRS3w55T66sYyPMZZxz7RJmSKAnPFvp5OHOpAOY1k0P9hadfsBSFx/HQto8C9vt1wnkA2bmyX3ozqfHCVAnJEDcA6ZcKbRnNSIEGvQBakXKy4Po6Vl8p0QXo/lsW3dI4DuO0K8K2ANvEWtE=" 
+      secure: "HmT6rHX4EUI5KEb82LsCuEhTwMPwQXkv4DENKpMFriTxc+VjeaVHxBxkZUKY1lcNkLLFm39djVlc+mOq4riCyTxyiU4cbW11YmV6oEe31tzzv/N8c7OBFidMc9jtbkaf460rA4rosFA3E6w08ouIaUV5snmumkKSvjPZ2edNYbqVgk6ZXRazZB8hj2kpxroCSNkRxnRBAYq4tvfaSZLLyUlxhLp5FhTfRiQw6OQQB3sKLedxT/Ht/7K9qpppmoq1a+jugvmlU/QI6kQBd93oKp6E42JOnfYBxHPn6IyQfsdZsshwMAUapcarlrSlLudQNmukFZ+k/hFf+ofaMWRiYrbWsDp6CDcEuQ5p40tonhyub64FKIHSIJyi3dwPK+6cKFPxSE0gMoAq7t267r7S8tKEOTiT+WMryzqkzjmtJvedrQ4Nxs0QPTSxms0040n+tGKyzpVFiwLy8/S1TX6tMWrmTEL5iVFwsml5Zq8/sJhpHwDL3Fc3jJOSIY+tQrxY7SKxdelktC7D8lZdyzjkoqR9tX1V8tSG1FS675vVa1wAcxCHnZOIXOt326QQEAF0JL9zRC45faqtc9qKiDyJmmylLH7Hxiv3WfSoWp5mxNxpQVLReJigrtfGo1V4WZbNqxSjnwu4oZvIGZAUlgVSI1zGISjd8P4EDrCjPkki3k0="
 
 script:
-  # the following command line builds the project, runs the tests with coverage and then execute the SonarCloud analysis
-  - sonar-scanner
   - php vendor/bin/phpunit -v
+  - sonar-scanner
 
 before_script:
   - echo 'extension = memcached.so' >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
