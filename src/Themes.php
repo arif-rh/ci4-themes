@@ -24,6 +24,46 @@ use Arifrh\Themes\Exceptions\ThemesException;
 class Themes 
 {
 	/**
+	 * Constant of key for css themes
+	 */
+	const CSS_THEME = 'css_themes';
+
+	/**
+	 * Constant of key for external css
+	 */
+	const EXTERNAL_CSS = 'external_css';
+
+	/**
+	 * Constant of key for js themes
+	 */
+	const JS_THEME = 'js_themes';
+
+	/**
+	 * Constant of key for external js
+	 */
+	const EXTERNAL_JS = 'external_js';
+
+	/**
+	 * Constant of key for inline js
+	 */
+	const INLINE_JS = 'inline_js';
+
+	/**
+	 * Constant of key for loaded plugin
+	 */
+	const LOADED_PLUGIN = 'loaded_plugins';
+
+	/**
+	 * Constant of variable that will be used as page title inside template
+	 */
+	const PAGE_TITLE = 'page_title';
+
+	/**
+	 * Constant of variable that will be used as content inside template
+	 */
+	const CONTENT = 'content';
+	
+	/**
 	 * Themes instance 
 	 *
 	 * @var    object||null
@@ -70,7 +110,18 @@ class Themes
 
 		self::$config = (array) $config;
 
-		self::$instance->setTheme(self::$config['theme']);
+		// define constant for config reference key var
+		foreach($config as $theme_key => $theme_value)
+		{
+			$constant = strtoupper($theme_key);
+
+			if (!defined($constant))
+			{
+				define($constant, $theme_key);
+			}
+		}
+
+		self::$instance->setTheme(self::$config[THEME]);
 
 		return self::$instance;
 	}
@@ -93,7 +144,7 @@ class Themes
 			if (!empty($css))
 			{
 				// set unique key-index to prevent duplicate css being included
-				self::$themeVars['css_themes'][sha1($css)] = $css;
+				self::$themeVars[self::CSS_THEME][sha1($css)] = $css;
 			}			
 		}
 
@@ -118,7 +169,7 @@ class Themes
 			if (!empty($js))
 			{
 				// set unique key-index to prevent duplicate js being included
-				self::$themeVars['js_themes'][sha1($js)] = $js;
+				self::$themeVars[self::JS_THEME][sha1($js)] = $js;
 			}
 		}
 
@@ -138,7 +189,7 @@ class Themes
 
 		if (!empty($js))
 		{
-			self::$themeVars['inline_js'][sha1($js)] = $js;
+			self::$themeVars[self::INLINE_JS][sha1($js)] = $js;
 		}
 
 		return $this;
@@ -161,7 +212,7 @@ class Themes
 
 			if (!empty( $css ))
 			{
-				self::$themeVars['external_css'][sha1($css)] = $css;
+				self::$themeVars[self::EXTERNAL_CSS][sha1($css)] = $css;
 			}
 		}
 
@@ -185,7 +236,7 @@ class Themes
 
 			if (!empty($js))
 			{
-				self::$themeVars['external_js'][sha1($js)] = $js;
+				self::$themeVars[self::EXTERNAL_JS][sha1($js)] = $js;
 			}
 		}
 
@@ -214,24 +265,36 @@ class Themes
 					throw ThemesException::forPluginNotRegistered($plugin);
 				}
 
-				foreach(self::$config['plugins'][$plugin] as $type => $plugin_files)
-				{
-					foreach($plugin_files as $plugin_file)
-					{
-						$plugin_path = str_replace(base_url(), FCPATH, self::$themeVars['plugin_url']);
-
-						if (!file_exists($plugin_path . $plugin_file))
-						{
-							throw ThemesException::forPluginNotFound($plugin_file);
-						}
-
-						self::$themeVars['loaded_plugins'][$type][] = self::$themeVars['plugin_url'] . $plugin_file;
-					}
-				}
+				$this->loadPlugin($plugin);
 			}
 		}
 
 		return $this;
+	}
+
+	/**
+	 * Load Each Plugin
+	 * 
+	 * @param string $plugin key of plugin
+	 */
+	protected function loadPlugin($plugin)
+	{
+		$plugin_url = self::$themeVars['plugin_url'];
+
+		foreach(self::$config['plugins'][$plugin] as $type => $plugin_files)
+		{
+			foreach($plugin_files as $plugin_file)
+			{
+				$plugin_path = str_replace(base_url(), FCPATH, $plugin_url);
+
+				if (!file_exists($plugin_path . $plugin_file))
+				{
+					throw ThemesException::forPluginNotFound($plugin_file);
+				}
+
+				self::$themeVars[self::LOADED_PLUGIN][$type][] = $plugin_url . $plugin_file;
+			}
+		}
 	}
 
 	/**
@@ -259,7 +322,7 @@ class Themes
 	{
 		if (is_string($header_name))
 		{
-			self::$config['header'] = $header_name;
+			self::$config[HEADER] = $header_name;
 		}
 
 		return $this;
@@ -276,7 +339,7 @@ class Themes
 	{
 		if (is_string($template_name))
 		{
-			self::$config['template'] = $template_name;
+			self::$config[TEMPLATE] = $template_name;
 		}
 
 		return $this;
@@ -293,7 +356,7 @@ class Themes
 	{
 		if (is_string($footer_name))
 		{
-			self::$config['footer'] = $footer_name;
+			self::$config[FOOTER] = $footer_name;
 		}
 
 		return $this;
@@ -310,13 +373,13 @@ class Themes
 	{
 		if (is_string($theme_name))
 		{
-			self::$config['theme'] = $theme_name;
+			self::$config[THEME] = $theme_name;
 		}
 
 		self::$instance->setVar([
-			'theme_url'  => base_url(self::$config['theme_path'] . '/' . self::$config['theme']) . '/',
-			'image_url'  => base_url(self::$config['theme_path'] . '/' . self::$config['theme'] . '/' . self::$config['image_path']) . '/',
-			'plugin_url' => base_url(self::$config['theme_path'] . '/' . self::$config['theme'] . '/' . self::$config['plugin_path']) . '/'
+			'theme_url'  => base_url(self::$config[THEME_PATH] . '/' . self::$config[THEME]) . '/',
+			'image_url'  => base_url(self::$config[THEME_PATH] . '/' . self::$config[THEME] . '/' . self::$config[IMAGE_PATH]) . '/',
+			'plugin_url' => base_url(self::$config[THEME_PATH] . '/' . self::$config[THEME] . '/' . self::$config[PLUGIN_PATH]) . '/'
 		]);
 
 		return $this;
@@ -332,16 +395,15 @@ class Themes
 	{
 		if (is_null(self::$instance))
 		{
-			$config = config('Themes');
-			self::init($config);
+			self::init();
 		}
-
+		
 		$objTheme = self::$instance;
 		$objTheme->setvar($data);
 
-		if (!$objTheme->templateExist(self::$config['template']))
+		if (!$objTheme->templateExist(self::$config[TEMPLATE]))
 		{
-			throw ThemesException::forMissingTemplateView(self::$config['template']);
+			throw ThemesException::forMissingTemplateView(self::$config[TEMPLATE]);
 		}
 
 		$objTheme->setContent($viewPath, $objTheme::getData());
@@ -349,26 +411,26 @@ class Themes
 		// use custom view using theme path
 		$view_config = Config('View');
 
-		$view = new \CodeIgniter\View\View($view_config, FCPATH . self::$config['theme_path'] . '/' . self::$config['theme'] . '/');
+		$view = new \CodeIgniter\View\View($view_config, FCPATH . self::$config[THEME_PATH] . '/' . self::$config[THEME] . '/');
 
 		$view->setData($objTheme::getData());
 
 		if (self::$config['use_full_template'])
 		{
-			echo $view->render(self::$config['template']);
+			echo $view->render(self::$config[TEMPLATE]);
 		}
 		else
 		{
-			if ($objTheme->templateExist(self::$config['header']))
+			if ($objTheme->templateExist(self::$config[HEADER]))
 			{
-				echo $view->render(self::$config['header']);
+				echo $view->render(self::$config[HEADER]);
 			}
 
-			echo $view->render(self::$config['template']);
+			echo $view->render(self::$config[TEMPLATE]);
 
-			if ($objTheme->templateExist(self::$config['footer']))
+			if ($objTheme->templateExist(self::$config[FOOTER]))
 			{
-				echo $view->render(self::$config['footer']);
+				echo $view->render(self::$config[FOOTER]);
 			}
 		}
 	}
@@ -378,14 +440,13 @@ class Themes
 	 */
 	public static function renderCSS()
 	{
+		helper('themes');
 		// proceed css themes, if exist
-		if (array_key_exists('css_themes', self::$themeVars))
+		if (array_key_exists(self::CSS_THEME, self::$themeVars))
 		{
-			helper('themes');
-
-			foreach(self::$themeVars['css_themes'] as $css)
+			foreach(self::$themeVars[self::CSS_THEME] as $css)
 			{
-				$css_file = FCPATH . self::$config['theme_path'] . '/' . self::$config['theme'] . '/' . self::$config['css_path'] . '/' . validate_ext($css, '.css');
+				$css_file = FCPATH . self::$config[THEME_PATH] . '/' . self::$config[THEME] . '/' . self::$config['css_path'] . '/' . validate_ext($css, '.css');
 
 				if (file_exists($css_file))
 				{
@@ -400,23 +461,20 @@ class Themes
 		}
 
 		// proceed external css, if exist
-		if (array_key_exists('external_css', self::$themeVars))
+		if (array_key_exists(self::EXTERNAL_CSS, self::$themeVars))
 		{
-			foreach(self::$themeVars['external_css'] as $css)
+			foreach(self::$themeVars[self::EXTERNAL_CSS] as $css)
 			{
 				echo link_tag($css);
 			}
 		}
 
 		// proceed plugin css, if exist
-		if (array_key_exists('loaded_plugins', self::$themeVars))
+		if (array_key_exists(self::LOADED_PLUGIN, self::$themeVars) && array_key_exists('css', self::$themeVars[self::LOADED_PLUGIN]))
 		{
-			if (array_key_exists('css', self::$themeVars['loaded_plugins']))
+			foreach(self::$themeVars[self::LOADED_PLUGIN]['css'] as $css)
 			{
-				foreach(self::$themeVars['loaded_plugins']['css'] as $css)
-				{
-					echo link_tag($css);
-				}
+				echo link_tag($css);
 			}
 		}
 	}
@@ -426,14 +484,13 @@ class Themes
 	 */
 	public static function renderJS()
 	{
+		helper('themes');
 		// proceed main js theme, if exist
-		if (array_key_exists('js_themes', self::$themeVars))
+		if (array_key_exists(self::JS_THEME, self::$themeVars))
 		{
-			helper('themes');
-
-			foreach(self::$themeVars['js_themes'] as $js)
+			foreach(self::$themeVars[self::JS_THEME] as $js)
 			{
-				$js_file = FCPATH . self::$config['theme_path'] . '/' . self::$config['theme'] . '/' . self::$config['js_path'] . '/' . validate_ext($js, '.js');
+				$js_file = FCPATH . self::$config[THEME_PATH] . '/' . self::$config[THEME] . '/' . self::$config[JS_PATH] . '/' . validate_ext($js, '.js');
 
 				if (file_exists($js_file))
 				{
@@ -447,33 +504,38 @@ class Themes
 			}
 		}
 
+		self::renderExtraJs();
+	}
+
+	/**
+	 * Render Inline JS
+	 */
+	protected static function renderExtraJs()
+	{
 		// proceed external js, if exist
-		if (array_key_exists('external_js', self::$themeVars))
+		if (array_key_exists(self::EXTERNAL_JS, self::$themeVars))
 		{
-			foreach(self::$themeVars['external_js'] as $js)
+			foreach(self::$themeVars[self::EXTERNAL_JS] as $js)
 			{
 				echo script_tag($js);
 			}
 		}
 
 		// proceed plugin js, if exist
-		if (array_key_exists('loaded_plugins', self::$themeVars))
+		if (array_key_exists(self::LOADED_PLUGIN, self::$themeVars) && array_key_exists('js', self::$themeVars[self::LOADED_PLUGIN]))
 		{
-			if (array_key_exists('js', self::$themeVars['loaded_plugins']))
+			foreach(self::$themeVars[self::LOADED_PLUGIN]['js'] as $js)
 			{
-				foreach(self::$themeVars['loaded_plugins']['js'] as $js)
-				{
-					echo script_tag($js);
-				}
+				echo script_tag($js);
 			}
 		}
 
 		// proceed inline js, if exist
-		if (array_key_exists('inline_js', self::$themeVars))
+		if (array_key_exists(self::INLINE_JS, self::$themeVars))
 		{
 			$inline_js = '<script type="text/javascript">' . PHP_EOL; 
 			
-			foreach(self::$themeVars['inline_js'] as $js)
+			foreach(self::$themeVars[self::INLINE_JS] as $js)
 			{
 				$inline_js .= $js . PHP_EOL;
 			}
@@ -495,7 +557,7 @@ class Themes
 	{
 		helper('themes');
 
-		return file_exists(FCPATH . self::$config['theme_path'] . '/' . self::$config['theme'] . '/' . validate_ext($template));
+		return file_exists(FCPATH . self::$config[THEME_PATH] . '/' . self::$config[THEME] . '/' . validate_ext($template));
 	}
 
 	/**
@@ -526,7 +588,7 @@ class Themes
 			}
 		}
 
-		$this->setVar('content', $content);
+		$this->setVar(self::CONTENT, $content);
 		$this->setPageTitle($data);
 	}
 
@@ -537,38 +599,28 @@ class Themes
 	 */
 	public function setPageTitle($page_title = null)
 	{
+		$_page_title = '';
+
 		if (is_string($page_title))
 		{
-			$this->setVar('page_title', $page_title);
+			$_page_title = $page_title;
 		}
-		elseif (is_array($page_title) && array_key_exists('page_title', $page_title))
+		elseif (is_array($page_title) && array_key_exists(self::PAGE_TITLE, $page_title))
 		{
-			$this->setVar('page_title', $page_title['page_title']);
+			$_page_title = $page_title[self::PAGE_TITLE];
 		}
-		elseif (!array_key_exists('page_title', self::$themeVars)) 
+		elseif (!array_key_exists(self::PAGE_TITLE, self::$themeVars) && !is_cli()) 
 		{
 			// page_title is not defined, so detect current controller/method as page title
-			//$router = service('router');
-			$moduleConfig  = new \Config\Modules;
-			$collection    = new \CodeIgniter\Router\RouteCollection(\CodeIgniter\Config\Services::locator(), $moduleConfig);
+			$router = service('router');
+		
+			$controllers = explode('\\', $router->controllerName());
+			$controller  = $controllers[count($controllers)-1];
 
-			$request = \CodeIgniter\Config\Services::request();
-
-			$router = new \CodeIgniter\Router\Router($collection, $request);
-
-			if ($router instanceof \CodeIgniter\Router\Router)
-			{
-				$namespace_controller  = $router->controllerName();
-				
-				$controllers = explode('\\', $namespace_controller);
-
-				$controller  = $controllers[count($controllers)-1];
-
-				$method = $router->methodName();
-
-				$this->setVar('page_title', $controller . ' | ' . ucfirst($method));
-			}
+			$_page_title = ($controller . ' | ' . ucfirst($router->methodName()));
 		}
+
+		$this->setVar(self::PAGE_TITLE, $_page_title);
 
 		return $this;
 	}
@@ -587,26 +639,15 @@ class Themes
 		{
 			foreach ($key as $_key => $_value)
 			{
-				$this->setThemeVars($_key, $_value);
+				self::$themeVars[$_key] = $_value;
 			}
 		}
 		else
 		{
-			$this->setThemeVars($key, $value);
+			self::$themeVars[$key] = $value;
 		}
 
 		return $this;
-	}
-
-	/**
-	 * Set Themes variable value
-	 * 
-	 * @param string $key
-	 * @param mixed  $value
-	 */
-	protected function setThemeVars($key, $value)
-	{
-		self::$themeVars[$key] = $value;
 	}
 
 	/**
