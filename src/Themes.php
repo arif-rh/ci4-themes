@@ -196,6 +196,33 @@ class Themes
 	}
 
 	/**
+	 * Adding i18n JS to the template
+	 *  
+	 * @param string  $js_scripts
+	 * @param mixed[] $langs
+	 * 
+	 * @return $this Arifrh\Themes\Themes
+	 */ 
+	public function addI18nJS(string $js_scripts, array $langs = [])
+	{
+		helper('themes');
+
+		$js = trim($js_scripts);
+
+		if (!empty($js))
+		{
+			if (pathinfo($js, PATHINFO_EXTENSION) == 'js')
+			{
+				$js = FCPATH . self::$config[THEME_PATH] . '/' . self::$config[THEME] . '/' . self::$config[JS_PATH] . '/' . $js;
+			}
+
+			self::$themeVars[self::INLINE_JS][sha1($js)] = translate($js, $langs);
+		}
+
+		return $this;
+	}
+
+	/**
 	 * Add CSS from external source (fully css url)
 	 * 
 	 * @param string||array $full_css_path
@@ -287,7 +314,7 @@ class Themes
 			{
 				$plugin_path = str_replace(base_url(), FCPATH, $plugin_url);
 
-				if (!file_exists($plugin_path . $plugin_file))
+				if (!is_file($plugin_path . $plugin_file))
 				{
 					throw ThemesException::forPluginNotFound($plugin_file);
 				}
@@ -448,7 +475,7 @@ class Themes
 			{
 				$css_file = FCPATH . self::$config[THEME_PATH] . '/' . self::$config[THEME] . '/' . self::$config['css_path'] . '/' . validate_ext($css, '.css');
 
-				if (file_exists($css_file))
+				if (is_file($css_file))
 				{
 					$latest_version = filemtime($css_file);
 
@@ -492,7 +519,7 @@ class Themes
 			{
 				$js_file = FCPATH . self::$config[THEME_PATH] . '/' . self::$config[THEME] . '/' . self::$config[JS_PATH] . '/' . validate_ext($js, '.js');
 
-				if (file_exists($js_file))
+				if (is_file($js_file))
 				{
 					$latest_version = filemtime($js_file);
 					
@@ -557,7 +584,7 @@ class Themes
 	{
 		helper('themes');
 
-		return file_exists(FCPATH . self::$config[THEME_PATH] . '/' . self::$config[THEME] . '/' . validate_ext($template));
+		return is_file(FCPATH . self::$config[THEME_PATH] . '/' . self::$config[THEME] . '/' . validate_ext($template));
 	}
 
 	/**

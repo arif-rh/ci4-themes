@@ -74,3 +74,28 @@ if (! function_exists('plugin_url'))
 // @codeCoverageIgnoreStart
 }
 // @codeCoverageIgnoreEnd
+
+/**
+ * Parse through a JS file and replace language keys with language text values
+ *
+ * @param string  $file
+ * @param mixed[] $langs
+ *
+ * @return string
+ */
+function translate(string $file, array $langs = [])
+{
+	$contents = is_file($file) ? file_get_contents($file) : $file;
+
+	preg_match_all("/\{\{(.*?)\}\}/", $contents, $matches, PREG_PATTERN_ORDER);
+
+	if ($matches)
+	{
+		foreach ($matches[1] as $match)
+		{
+			$contents = str_replace("{{{$match}}}", isset($langs[trim($match)]) ? $langs[trim($match)] : lang($match), $contents);
+		}
+	}
+
+	return $contents;
+}
