@@ -512,6 +512,9 @@ class Themes
 	public static function renderJS()
 	{
 		helper('themes');
+	
+		self::renderExtraJs();
+
 		// proceed main js theme, if exist
 		if (array_key_exists(self::JS_THEME, self::$themeVars))
 		{
@@ -531,7 +534,20 @@ class Themes
 			}
 		}
 
-		self::renderExtraJs();
+		// proceed inline js, if exist
+		if (array_key_exists(self::INLINE_JS, self::$themeVars))
+		{
+			$inline_js = '<script type="text/javascript">' . PHP_EOL; 
+			
+			foreach(self::$themeVars[self::INLINE_JS] as $js)
+			{
+				$inline_js .= $js . PHP_EOL;
+			}
+
+			$inline_js .= '</script>' . PHP_EOL;
+
+			echo $inline_js;
+		}
 	}
 
 	/**
@@ -555,21 +571,6 @@ class Themes
 			{
 				echo script_tag($js);
 			}
-		}
-
-		// proceed inline js, if exist
-		if (array_key_exists(self::INLINE_JS, self::$themeVars))
-		{
-			$inline_js = '<script type="text/javascript">' . PHP_EOL; 
-			
-			foreach(self::$themeVars[self::INLINE_JS] as $js)
-			{
-				$inline_js .= $js . PHP_EOL;
-			}
-
-			$inline_js .= '</script>' . PHP_EOL;
-
-			echo $inline_js;
 		}
 	}
 
