@@ -468,24 +468,6 @@ class Themes
 	public static function renderCSS()
 	{
 		helper('themes');
-		// proceed css themes, if exist
-		if (array_key_exists(self::CSS_THEME, self::$themeVars))
-		{
-			foreach(self::$themeVars[self::CSS_THEME] as $css)
-			{
-				$css_file = FCPATH . self::$config[THEME_PATH] . '/' . self::$config[THEME] . '/' . self::$config['css_path'] . '/' . validate_ext($css, '.css');
-
-				if (is_file($css_file))
-				{
-					$latest_version = filemtime($css_file);
-
-					$css_file   = str_replace(FCPATH, '', $css_file);
-					$latest_css = base_url($css_file . '?v=' . $latest_version);
-
-					echo link_tag($latest_css);
-				}
-			}
-		}
 
 		// proceed external css, if exist
 		if (array_key_exists(self::EXTERNAL_CSS, self::$themeVars))
@@ -502,6 +484,25 @@ class Themes
 			foreach(self::$themeVars[self::LOADED_PLUGIN]['css'] as $css)
 			{
 				echo link_tag($css);
+			}
+		}
+
+		// proceed css themes, if exist
+		if (array_key_exists(self::CSS_THEME, self::$themeVars))
+		{
+			foreach(self::$themeVars[self::CSS_THEME] as $css)
+			{
+				$css_file = FCPATH . self::$config[THEME_PATH] . '/' . self::$config[THEME] . '/' . self::$config['css_path'] . '/' . validate_ext($css, '.css');
+
+				if (is_file($css_file))
+				{
+					$latest_version = filemtime($css_file);
+
+					$css_file   = str_replace(FCPATH, '', $css_file);
+					$latest_css = base_url($css_file . '?v=' . $latest_version);
+
+					echo link_tag($latest_css);
+				}
 			}
 		}
 	}
