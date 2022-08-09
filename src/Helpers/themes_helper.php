@@ -16,8 +16,13 @@ if (! function_exists('script_tag'))
 {
 // @codeCoverageIgnoreEnd
 	// generate js script tags
-	function script_tag($js)
+	function script_tag($js, $inline = false)
 	{
+		if ($inline)
+		{
+			return '<script type="text/javascript">' . PHP_EOL . $js . PHP_EOL . '</script>' . PHP_EOL;
+		}
+	
 		return '<script src="' . $js . '"></script>' . PHP_EOL;
 	}
 // @codeCoverageIgnoreStart
@@ -41,9 +46,35 @@ if (! function_exists('theme_url'))
 	// return full path from active theme URL
 	function theme_url($path = null)
 	{
-		$themeVars = Arifrh\Themes\Themes::getData();
+		$tmpVars = Arifrh\Themes\Themes::getVars();
 
-		return $themeVars['theme_url'] . (is_string($path) ? $path : '');
+		return $tmpVars['theme_url'] . (is_string($path) ? $path : '');
+	}
+// @codeCoverageIgnoreStart
+}
+
+if (! function_exists('css_url'))
+{
+// @codeCoverageIgnoreEnd
+	// return full path from active css theme URL
+	function css_url($path = null)
+	{
+		$tmpVars = Arifrh\Themes\Themes::getVars();
+
+		return $tmpVars['css_url'] . (is_string($path) ? $path : '');
+	}
+// @codeCoverageIgnoreStart
+}
+
+if (! function_exists('js_url'))
+{
+// @codeCoverageIgnoreEnd
+	// return full path from active js theme URL
+	function js_url($path = null)
+	{
+		$tmpVars = Arifrh\Themes\Themes::getVars();
+
+		return $tmpVars['js_url'] . (is_string($path) ? $path : '');
 	}
 // @codeCoverageIgnoreStart
 }
@@ -54,9 +85,9 @@ if (! function_exists('image_url'))
 	// return full path to image URL in active theme
 	function image_url($path = null)
 	{
-		$themeVars = Arifrh\Themes\Themes::getData();
+		$tmpVars = Arifrh\Themes\Themes::getVars();
 
-		return $themeVars['image_url'] . (is_string($path) ? $path : '');
+		return $tmpVars['image_url'] . (is_string($path) ? $path : '');
 	}
 // @codeCoverageIgnoreStart
 }
@@ -67,9 +98,9 @@ if (! function_exists('plugin_url'))
 	// return full path to plugin URL in active theme
 	function plugin_url($path = null)
 	{
-		$themeVars = Arifrh\Themes\Themes::getData();
+		$tmpVars = Arifrh\Themes\Themes::getVars();
 
-		return $themeVars['plugin_url'] . (is_string($path) ? $path : '');
+		return $tmpVars['plugin_url'] . (is_string($path) ? $path : '');
 	}
 // @codeCoverageIgnoreStart
 }

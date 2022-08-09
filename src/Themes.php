@@ -9,7 +9,7 @@
 	 * @copyright Copyright (c) 2020, Arif Rahman Hakim  (http://github.com/arif-rh)
 	 * @license   BSD - http://www.opensource.org/licenses/BSD-3-Clause
 	 * @link      https://github.com/arif-rh/ci4-themes
-	 * @version   0.0.1
+	 * @version   2.0-dev
 	 */
 
 namespace Arifrh\Themes;
@@ -23,36 +23,6 @@ use Arifrh\Themes\Exceptions\ThemesException;
  */
 class Themes 
 {
-	/**
-	 * Constant of key for css themes
-	 */
-	const CSS_THEME = 'css_themes';
-
-	/**
-	 * Constant of key for external css
-	 */
-	const EXTERNAL_CSS = 'external_css';
-
-	/**
-	 * Constant of key for js themes
-	 */
-	const JS_THEME = 'js_themes';
-
-	/**
-	 * Constant of key for external js
-	 */
-	const EXTERNAL_JS = 'external_js';
-
-	/**
-	 * Constant of key for inline js
-	 */
-	const INLINE_JS = 'inline_js';
-
-	/**
-	 * Constant of key for loaded plugin
-	 */
-	const LOADED_PLUGIN = 'loaded_plugins';
-
 	/**
 	 * Constant of variable that will be used as page title inside template
 	 */
@@ -72,79 +42,102 @@ class Themes
 	private static $instance = null;
 
 	/**
-	 * Theme variables - store variables to be used in template file
+	 * Temporary variables which will be used in rendering template
 	 *
 	 * @var    array
 	 * @access protected
 	 */
-	protected static $themeVars = [];
+	protected static $tmpVars = [];
 
 	/**
-	 * Themes Configuration - Used from \Arifrh\Config\Themes but can be overiden in the run-time
+	 * Initialize Themes based on context 
 	 *
-	 * @var    array
-	 * @access protected
-	 */
-	protected static $config = [];
-
-	/**
-	 * Intantiate Themes with default config 
-	 *
-	 * @param  \Config\Themes    $config
+	 * @param  mixed $context
 	 * 
 	 * @return void
 	 */
-	public static function init($config = null)
+	public static function init($context = null)
 	{
 		if (self::$instance === null)
 		{
 			self::$instance = new self;
 		}
 
-		if (is_null($config))
+		self::$instance::$tmpVars = null;
+
+		if (! function_exists('setting'))
 		{
-			$config = config('Themes');
+			helper('setting');
 		}
 
-		self::$instance::$themeVars = null;
+		$themeName = setting()->get('Themes.name', $context);
 
-		self::$config = (array) $config;
-
-		// define constant for config reference key var
-		foreach($config as $theme_key => $theme_value)
-		{
-			$constant = strtoupper($theme_key);
-
-			if (!defined($constant))
-			{
-				define($constant, $theme_key);
-			}
-		}
-
-		self::$instance->setTheme(self::$config[THEME]);
+		self::$instance->setTheme($themeName, $context);
 
 		return self::$instance;
+	}
+
+	 /**
+	 * Set Theme name
+	 * 
+	 * @param string $themeName
+	 * 
+	 * @return $this Arifrh\Themes\Themes
+	 */
+	public function setTheme($themeName, $context = null)
+	{
+		if (is_string($themeName))
+		{
+			setting()->set('Themes.name', $themeName, $context);
+		}
+
+		$publicAssets = setting()->get('Themes.public_assets');
+		$themeDir     = $publicAssets['theme_dir'];
+		$cssDir       = $publicAssets['css_dir'];
+		$jsDir        = $publicAssets['js_dir'];
+		$imageDir     = $publicAssets['image_dir'];
+		$pluginDir    = $publicAssets['plugin_dir'];
+		$themeURL     = base_url($themeDir . '/' . $themeName) . '/';
+
+		self::$instance->setVar([
+			'theme_url'  => $themeURL,
+			'css_url'    => $themeURL . $cssDir . '/',
+			'js_url'     => $themeURL . $jsDir . '/',
+			'image_url'  => $themeURL . $imageDir . '/',
+			'plugin_url' => $themeURL . $pluginDir . '/',
+		]);
+
+		return $this;
 	}
 
 	/**
 	 * add css file(s) to be loaded inside template
 	 *
-	 * @param   string||array   $css_files
-	 * 
+	 * @param string|array   $cssFiles
+	 * @param boolean        $isExternal wether the css file is local or external
+ 	 * @param integer        $priority   css priority order
 	 *@return $this Arifrh\Themes\Themes
 	 */	
-	public function addCSS($css_files = [])
+	public function addCSS($cssFiles, $isExternal = false, $priority = 0)
 	{
-		$css_files = is_array($css_files) ? $css_files : explode(',', $css_files);
+		$cssFiles = is_array($cssFiles) ? $cssFiles : explode(',', $cssFiles);
 
-		foreach ($css_files as $css)
+		foreach ($cssFiles as $css)
 		{
 			$css = trim($css);
 
-			if (!empty($css))
+			$cssTag = self::linkTag($css, $isExternal);
+
+			if (! empty($css) && ! empty($cssTag))
 			{
-				// set unique key-index to prevent duplicate css being included
-				self::$themeVars[self::CSS_THEME][sha1($css)] = $css;
+				if (isset(self::$tmpVars['css'][$priority]))
+				{
+					ksort(self::$tmpVars['css']);
+				}
+
+				self::$tmpVars['css'][$priority][] = [
+					sha1($css) => $cssTag,
+				];
 			}			
 		}
 
@@ -152,47 +145,193 @@ class Themes
 	}
 
 	/**
-	 * add js file(s) to be loaded inside template
-	 *
-	 * @param   string||array   $js_files
+	 * Generate css link html tag
 	 * 
-	 *@return $this Arifrh\Themes\Themes
+	 * @param string  $css
+	 * @param boolean $isExternal wether css is local or external
+	 * 
+	 * @return string
 	 */
-	public function addJS($js_files)
+	public static function linkTag($css, $isExternal = false)
 	{
-		$js_files = is_array($js_files) ? $js_files : explode(',', $js_files);
+		if (! function_exists('validate_ext'))
+		{
+			helper('themes');
+		}
 
-		foreach ($js_files as $js)
+		if ($isExternal)
+		{
+			return link_tag($css);
+		}
+
+		$cssURL  = css_url(validate_ext($css, '.css'));
+		$cssFile = str_replace(base_url(), FCPATH, $cssURL);
+
+		if (is_file($cssFile))
+		{
+			return link_tag($cssURL . '?v=' . filemtime($cssFile));
+		}
+
+		return null;
+	}
+
+	/**
+	 * render CSS themes
+	 */
+	public static function renderCSS()
+	{
+		if (isset(self::$tmpVars['css']))
+		{
+			// sort by priority order
+			ksort(self::$tmpVars['css']);
+	
+			$existingCss = [];
+	
+			foreach (self::$tmpVars['css'] as $priorityCss)
+			{
+				foreach ($priorityCss as $css)
+				{
+					foreach ($css as $idx => $linkTagHTML)
+					{
+						if (! in_array($idx, $existingCss))
+						{
+							echo $linkTagHTML . PHP_EOL;
+							array_push($existingCss, $idx);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * add Js file(s) to be loaded inside template
+	 *
+	 * @param string|array   $jsFiles    
+	 * @param boolean        $isExternalOrInline wether the js file is local or external, or inline script
+ 	 * @param integer        $priority           js priority order
+	 *@return $this Arifrh\Themes\Themes
+	 */	
+	public function addJS($jsFiles, $isExternalOrInline = false, $priority = 0)
+	{
+		if (is_string($jsFiles) && is_string($isExternalOrInline) && strtolower($isExternalOrInline) == 'inline')
+		{
+			return $this->addInlineJS($jsFiles, $priority);
+		}
+
+		$jsFiles = is_array($jsFiles) ? $jsFiles : explode(',', $jsFiles);
+
+		foreach ($jsFiles as $js)
 		{
 			$js = trim($js);
 
-			if (!empty($js))
+			$jsTag = self::scriptTag($js, $isExternalOrInline);
+
+			if (! empty($js) && ! empty($jsTag))
 			{
-				// set unique key-index to prevent duplicate js being included
-				self::$themeVars[self::JS_THEME][sha1($js)] = $js;
-			}
+				if (isset(self::$tmpVars['js'][$priority]))
+				{
+					ksort(self::$tmpVars['js']);
+				}
+
+				self::$tmpVars['js'][$priority][] = [
+					sha1($js) => $jsTag,
+				];
+			}	
 		}
 
 		return $this;
 	}
 
 	/**
+	 * Generate script tag html
+	 * 
+	 * @param string  $js
+	 * @param boolean $isExternal wether js is local or external
+	 * 
+	 * @return string
+	 */
+	public static function scriptTag($js, $isExternal = false)
+	{
+		if (! function_exists('validate_ext'))
+		{
+			helper('themes');
+		}
+
+		if ($isExternal)
+		{
+			return script_tag($js);
+		}
+
+		$jsURL  = js_url(validate_ext($js, '.js'));
+		$jsFile = str_replace(base_url(), FCPATH, $jsURL);
+
+		if (is_file($jsFile))
+		{
+			return script_tag($jsURL . '?v=' . filemtime($jsFile));
+		}
+
+		return null;
+	}
+
+	/**
 	 * Adding inline JS to the template
 	 *  
-	 * @param string $js_scripts
+	 * @param string  $inlineScript
+ 	 * @param integer $priority      js priority order
 	 * 
 	 * @return $this Arifrh\Themes\Themes
 	 */ 
-	public function addInlineJS($js_scripts)
+	public function addInlineJS($inlineScript, $priority = 0)
 	{
-		$js = trim($js_scripts);
+		$js = trim($inlineScript);
 
-		if (!empty($js))
+		if (! empty($js))
 		{
-			self::$themeVars[self::INLINE_JS][sha1($js)] = $js;
+			if (isset(self::$tmpVars['js'][$priority]))
+			{
+				ksort(self::$tmpVars['js']);
+			}
+
+			self::$tmpVars['js'][$priority][] = [
+				sha1($js) => script_tag($js, true),
+			];
 		}
 
 		return $this;
+	}
+
+	/**
+	 * render JS themes
+	 */
+	public static function renderJS()
+	{
+		if (isset(self::$tmpVars['js']))
+		{
+			// sort by priority order
+			ksort(self::$tmpVars['js']);
+	
+			$existingJs = [];
+	
+			foreach (self::$tmpVars['js'] as $priorityJs)
+			{
+				foreach ($priorityJs as $js)
+				{
+					foreach ($js as $idx => $scriptTagHTML)
+					{
+						if (! in_array($idx, $existingJs))
+						{
+							echo $scriptTagHTML . PHP_EOL;
+							array_push($existingJs, $idx);
+						}
+					}
+				}
+			}
+		}
+
+		return false;
+	
+		self::renderExtraJs();
 	}
 
 	/**
@@ -216,55 +355,7 @@ class Themes
 				$js = FCPATH . self::$config[THEME_PATH] . '/' . self::$config[THEME] . '/' . self::$config[JS_PATH] . '/' . $js;
 			}
 
-			self::$themeVars[self::INLINE_JS][sha1($js)] = translate($js, $langs);
-		}
-
-		return $this;
-	}
-
-	/**
-	 * Add CSS from external source (fully css url)
-	 * 
-	 * @param string||array $full_css_path
-	 * 
-	 * @return $this Arifrh\Themes\Themes
-	 */
-	public function addExternalCSS($full_css_path = null)
-	{
-		$full_css_path = is_array($full_css_path) ? $full_css_path : explode(',', $full_css_path);
-
-		foreach ($full_css_path as $css)
-		{
-			$css = trim($css);
-
-			if (!empty( $css ))
-			{
-				self::$themeVars[self::EXTERNAL_CSS][sha1($css)] = $css;
-			}
-		}
-
-		return $this;
-	}
-
-	/**
-	 * Add JS from external source (fully js url)
-	 * 
-	 * @param string||array $full_js_path
-	 * 
-	 * @return $this Arifrh\Themes\Themes
-	 */
-	public function addExternalJS($full_js_path = null)
-	{
-		$full_js_path = is_array($full_js_path) ? $full_js_path : explode(',', $full_js_path);
-
-		foreach ($full_js_path as $js)
-		{
-			$js = trim($js);
-
-			if (!empty($js))
-			{
-				self::$themeVars[self::EXTERNAL_JS][sha1($js)] = $js;
-			}
+			self::$tmpVars[self::INLINE_JS][sha1($js)] = translate($js, $langs);
 		}
 
 		return $this;
@@ -306,7 +397,7 @@ class Themes
 	 */
 	protected function loadPlugin($plugin)
 	{
-		$plugin_url = self::$themeVars['plugin_url'];
+		$plugin_url = self::$tmpVars['plugin_url'];
 
 		foreach(self::$config['plugins'][$plugin] as $type => $plugin_files)
 		{
@@ -319,7 +410,7 @@ class Themes
 					throw ThemesException::forPluginNotFound($plugin_file);
 				}
 
-				self::$themeVars[self::LOADED_PLUGIN][$type][] = $plugin_url . $plugin_file;
+				self::$tmpVars[self::LOADED_PLUGIN][$type][] = $plugin_url . $plugin_file;
 			}
 		}
 	}
@@ -389,28 +480,7 @@ class Themes
 		return $this;
 	}
 
-	/**
-	 * Set Theme in the run-time
-	 * 
-	 * @param string $theme_name
-	 * 
-	 * @return $this Arifrh\Themes\Themes
-	 */
-	public function setTheme($theme_name = null)
-	{
-		if (is_string($theme_name))
-		{
-			self::$config[THEME] = $theme_name;
-		}
-
-		self::$instance->setVar([
-			'theme_url'  => base_url(self::$config[THEME_PATH] . '/' . self::$config[THEME]) . '/',
-			'image_url'  => base_url(self::$config[THEME_PATH] . '/' . self::$config[THEME] . '/' . self::$config[IMAGE_PATH]) . '/',
-			'plugin_url' => base_url(self::$config[THEME_PATH] . '/' . self::$config[THEME] . '/' . self::$config[PLUGIN_PATH]) . '/'
-		]);
-
-		return $this;
-	}
+	
 
 	/**
 	 * Render view or plain text or html into template theme
@@ -433,14 +503,14 @@ class Themes
 			throw ThemesException::forMissingTemplateView(self::$config[TEMPLATE]);
 		}
 
-		$objTheme->setContent($viewPath, $objTheme::getData());
+		$objTheme->setContent($viewPath, $objTheme::getVars());
 
 		// use custom view using theme path
 		$view_config = Config('View');
 
 		$view = new \CodeIgniter\View\View($view_config, FCPATH . self::$config[THEME_PATH] . '/' . self::$config[THEME] . '/');
 
-		$view->setData($objTheme::getData());
+		$view->setData($objTheme::getVars());
 
 		if (self::$config['use_full_template'])
 		{
@@ -463,112 +533,23 @@ class Themes
 	}
 
 	/**
-	 * render CSS themes
-	 */
-	public static function renderCSS()
-	{
-		helper('themes');
-
-		// proceed external css, if exist
-		if (array_key_exists(self::EXTERNAL_CSS, self::$themeVars))
-		{
-			foreach(self::$themeVars[self::EXTERNAL_CSS] as $css)
-			{
-				echo link_tag($css);
-			}
-		}
-
-		// proceed plugin css, if exist
-		if (array_key_exists(self::LOADED_PLUGIN, self::$themeVars) && array_key_exists('css', self::$themeVars[self::LOADED_PLUGIN]))
-		{
-			foreach(self::$themeVars[self::LOADED_PLUGIN]['css'] as $css)
-			{
-				echo link_tag($css);
-			}
-		}
-
-		// proceed css themes, if exist
-		if (array_key_exists(self::CSS_THEME, self::$themeVars))
-		{
-			foreach(self::$themeVars[self::CSS_THEME] as $css)
-			{
-				$css_file = FCPATH . self::$config[THEME_PATH] . '/' . self::$config[THEME] . '/' . self::$config['css_path'] . '/' . validate_ext($css, '.css');
-
-				if (is_file($css_file))
-				{
-					$latest_version = filemtime($css_file);
-
-					$css_file   = str_replace(FCPATH, '', $css_file);
-					$latest_css = base_url($css_file . '?v=' . $latest_version);
-
-					echo link_tag($latest_css);
-				}
-			}
-		}
-	}
-
-	/**
-	 * render JS themes
-	 */
-	public static function renderJS()
-	{
-		helper('themes');
-	
-		self::renderExtraJs();
-
-		// proceed main js theme, if exist
-		if (array_key_exists(self::JS_THEME, self::$themeVars))
-		{
-			foreach(self::$themeVars[self::JS_THEME] as $js)
-			{
-				$js_file = FCPATH . self::$config[THEME_PATH] . '/' . self::$config[THEME] . '/' . self::$config[JS_PATH] . '/' . validate_ext($js, '.js');
-
-				if (is_file($js_file))
-				{
-					$latest_version = filemtime($js_file);
-					
-					$js_file   = str_replace(FCPATH, '', $js_file);
-					$latest_js = base_url($js_file . '?v=' . $latest_version);
-
-					echo script_tag($latest_js);
-				}
-			}
-		}
-
-		// proceed inline js, if exist
-		if (array_key_exists(self::INLINE_JS, self::$themeVars))
-		{
-			$inline_js = '<script type="text/javascript">' . PHP_EOL; 
-			
-			foreach(self::$themeVars[self::INLINE_JS] as $js)
-			{
-				$inline_js .= $js . PHP_EOL;
-			}
-
-			$inline_js .= '</script>' . PHP_EOL;
-
-			echo $inline_js;
-		}
-	}
-
-	/**
 	 * Render Inline JS
 	 */
 	protected static function renderExtraJs()
 	{
 		// proceed external js, if exist
-		if (array_key_exists(self::EXTERNAL_JS, self::$themeVars))
+		if (array_key_exists(self::EXTERNAL_JS, self::$tmpVars))
 		{
-			foreach(self::$themeVars[self::EXTERNAL_JS] as $js)
+			foreach(self::$tmpVars[self::EXTERNAL_JS] as $js)
 			{
 				echo script_tag($js);
 			}
 		}
 
 		// proceed plugin js, if exist
-		if (array_key_exists(self::LOADED_PLUGIN, self::$themeVars) && array_key_exists('js', self::$themeVars[self::LOADED_PLUGIN]))
+		if (array_key_exists(self::LOADED_PLUGIN, self::$tmpVars) && array_key_exists('js', self::$tmpVars[self::LOADED_PLUGIN]))
 		{
-			foreach(self::$themeVars[self::LOADED_PLUGIN]['js'] as $js)
+			foreach(self::$tmpVars[self::LOADED_PLUGIN]['js'] as $js)
 			{
 				echo script_tag($js);
 			}
@@ -638,7 +619,7 @@ class Themes
 		{
 			$_page_title = $page_title[self::PAGE_TITLE];
 		}
-		elseif (!array_key_exists(self::PAGE_TITLE, self::$themeVars) && !is_cli()) 
+		elseif (!array_key_exists(self::PAGE_TITLE, self::$tmpVars) && !is_cli()) 
 		{
 			// page_title is not defined, so detect current controller/method as page title
 			$router = service('router');
@@ -668,12 +649,12 @@ class Themes
 		{
 			foreach ($key as $_key => $_value)
 			{
-				self::$themeVars[$_key] = $_value;
+				self::$tmpVars[$_key] = $_value;
 			}
 		}
 		else
 		{
-			self::$themeVars[$key] = $value;
+			self::$tmpVars[$key] = $value;
 		}
 
 		return $this;
@@ -684,18 +665,8 @@ class Themes
 	 * 
 	 * @return array
 	 */
-	public static function getData(): array
+	public static function getVars(): array
 	{
-		return self::$themeVars;
-	}
-
-	/**
-	 * Get All Themes Configs
-	 * 
-	 * @return array
-	 */
-	public static function getConfig(): array
-	{
-		return self::$config;
+		return self::$tmpVars;
 	}
 }

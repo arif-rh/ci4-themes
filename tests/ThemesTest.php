@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 use org\bovigo\vfs\vfsStream;
 use PHPUnit\Framework\TestCase;
-use Arifrh\Themes\Config as Config;
+use Arifrh\ThemesTest\Config\Themes as ConfigTheme;
 use Arifrh\Themes\Themes;
 
 
@@ -15,6 +15,12 @@ final class ThemesTest extends TestCase
     public function setUp(): void
     {
         helper('url');
+
+        $config           = config('Settings');
+        $config->handlers = ['array'];
+
+        $settings = new \CodeIgniter\Settings\Settings($config);
+
         $this->themes = Themes::init();
     }
 
@@ -25,16 +31,13 @@ final class ThemesTest extends TestCase
 
     public function testInitReturnInstance()
     {
-        $config = new Config\Themes;
-
         $this->assertContainsOnlyInstancesOf(
             Themes::class,
-            [Themes::init($config)],
+            [Themes::init('module:frontend')],
             'Themes is not an instance of Arifrh\Themes\Themes'
         );
 
         // init without passing config
-
         $this->assertContainsOnlyInstancesOf(
             Themes::class,
             [Themes::init()],
@@ -42,46 +45,90 @@ final class ThemesTest extends TestCase
         );
     }
 
-    public function testAddSingleCss()
+    public function testAddCss()
     {
-        $css = "style.css";
+        $css = ["style.css"];
 
-        $this->themes->addCSS($css);
+        $priority = 0;
 
-        $themeVars = $this->themes::getData();
+        $this->themes->addCSS($css, false, $priority);
 
-        $this->assertCount(1, $themeVars[$this->themes::CSS_THEME]);
-    
-        // add css using array
+        $tmpVars = $this->themes::getVars();
 
-        $css = [$css];
+        $this->assertCount(1, $tmpVars['css'][$priority]);
 
-        $this->themes->addCSS($css);
+        $css = [
+            "style2.css",
+            "custom.css",
+        ];
 
-        $themeVars = $this->themes::getData();
+        $this->themes->addCSS($css, false, $priority);
 
-        $this->assertCount(1, $themeVars[$this->themes::CSS_THEME]);
+        $tmpVars = $this->themes::getVars();
+
+        $this->assertCount(3, $tmpVars['css'][$priority]);
+
+        // add CSS from external resource
+        $externalCSS = 'https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css';
+
+        $this->themes->addCSS([$externalCSS], true, 1);
+
+        $externalCssTag = [
+            [sha1($externalCSS) => $this->themes::linkTag($externalCSS, true)],
+        ];
+
+        $tmpVars = $this->themes::getVars();
+
+        $this->assertSame($externalCssTag, $tmpVars['css'][1]);
     }
 
-    public function testAddMultipleCss()
+    public function testAddCssWithDifferentPriority()
     {
-        $css = "style.css, style-2.css";
+        $cssPriority1 = [
+            "style2.css",
+            "custom.css",
+        ];
+        
+        // set CSS with priority order 1
+        $this->themes->addCSS($cssPriority1, false, 1);
 
-        $this->themes->addCSS($css);
+        $css = "style.css";
+        // set CSS with priority order 0
+        $this->themes->addCSS([$css], false, 0);
 
-        $themeVars = $this->themes::getData();
+        $tmpVars = $this->themes::getVars();
 
-        $this->assertCount(2, $themeVars[$this->themes::CSS_THEME]);
-   
-        // add multiple css using array
+        $firstOrderCss = [
+            [sha1($css) => $this->themes::linkTag($css)],
+        ];
 
-        $css = explode(",", $css);
+        $this->assertSame($firstOrderCss, $tmpVars['css'][0]);
 
-        $this->themes->addCSS($css);
+        $nextCss = [];
 
-        $themeVars = $this->themes::getData();
+        foreach ($cssPriority1 as $css)
+        {
+            $nextCss[] = [sha1($css) => $this->themes::linkTag($css)];
+        }
 
-        $this->assertCount(2, $themeVars[$this->themes::CSS_THEME]);
+        $this->assertSame($nextCss, $tmpVars['css'][1]);
+    }
+
+    public function testRenderCss()
+    {
+        $this->themes
+            ->addCSS('style.css')
+            ->addCSS('style2.css')
+            ->addCSS('http://example.org/css/other-style.css', true);
+
+        ob_start();
+        $this->themes::renderCSS();
+        $renderCSS = ob_get_contents();
+        @ob_end_clean();
+
+        $this->assertStringContainsString($this->themes::linkTag('style.css'), $renderCSS);
+        $this->assertStringContainsString($this->themes::linkTag('style2.css'), $renderCSS);
+        $this->assertStringContainsString($this->themes::linkTag('http://example.org/css/other-style.css', true), $renderCSS);
     }
 
     public function testAddJs()
@@ -89,43 +136,41 @@ final class ThemesTest extends TestCase
         $js = "script.js";
         $this->themes->addJS($js);
 
-        $themeVars = $this->themes::getData();
+        $tmpVars = $this->themes::getVars();
 
-        $this->assertContains($js, $themeVars[$this->themes::JS_THEME]);
-    }
+        $assetJs = [
+            [sha1($js) => $this->themes::scriptTag($js)],
+        ];
 
-    public function testAddInlineJs()
-    {
+        $this->assertSame($assetJs, $tmpVars['js'][0]);
+   
+        // add inline js script
         $inlineJs = "alert('OK');";
-        $this->themes->addInlineJS($inlineJs);
 
-        $themeVars = $this->themes::getData();
+        $this->themes->addJS($inlineJs, 'inline', 1);
 
-        $this->assertContains($inlineJs, $themeVars[$this->themes::INLINE_JS]);
-    }
+        $tmpVars = $this->themes::getVars();
 
-    public function testAddExternalCss()
-    {
-        $css = "http://example.com/css/other-style.css";
+        $assetInlineJs = [
+            [sha1($inlineJs) => script_tag($inlineJs, true)],
+        ];
 
-        $this->themes->addExternalCSS($css);
-
-        $themeVars = $this->themes::getData();
-
-        $this->assertCount(1, $themeVars[$this->themes::EXTERNAL_CSS]);
-    }
-
-    public function testAddExternalJs()
-    {
+        $this->assertSame($assetInlineJs, $tmpVars['js'][1]);
+   
+        // add js from external source
         $js = "http://example.com/js/other-script.js";
 
-        $this->themes->addExternalJS($js);
+        $this->themes->addJS($js, true, 2);
 
-        $themeVars = $this->themes::getData();
+        $tmpVars = $this->themes::getVars();
 
-        $this->assertCount(1, $themeVars[$this->themes::EXTERNAL_JS]);
+        $assetJs = [
+            [sha1($js) => $this->themes::scriptTag($js, true)],
+        ];
+
+        $this->assertSame($assetJs, $tmpVars['js'][2]);
     }
-
+/*
     public function testSetHeader()
     {
         $custom_header = 'custom-header';
@@ -174,9 +219,9 @@ final class ThemesTest extends TestCase
 
         $this->themes->setVar('package_name', $package_name);
 
-        $themeVars = $this->themes::getData();
+        $tmpVars = $this->themes::getVars();
 
-        $this->assertEquals($package_name, $themeVars['package_name']);
+        $this->assertEquals($package_name, $tmpVars['package_name']);
     }
 
     public function testSetPageTitle()
@@ -185,16 +230,16 @@ final class ThemesTest extends TestCase
 
         $this->themes->setPageTitle($page_title);
 
-        $themeVars = $this->themes::getData();
+        $tmpVars = $this->themes::getVars();
 
-        $this->assertEquals($page_title, $themeVars[$this->themes::PAGE_TITLE]);
+        $this->assertEquals($page_title, $tmpVars[$this->themes::PAGE_TITLE]);
 
         // test using array
         $this->themes->setPageTitle(['page_title' => $page_title]);
 
-        $themeVars = $this->themes::getData();
+        $tmpVars = $this->themes::getVars();
 
-        $this->assertEquals($page_title, $themeVars[$this->themes::PAGE_TITLE]);
+        $this->assertEquals($page_title, $tmpVars[$this->themes::PAGE_TITLE]);
     }
 
     public function testUsingCustomConfig()
@@ -224,10 +269,10 @@ final class ThemesTest extends TestCase
         $this->themes->loadPlugins($plugin);
 
         $themeConfig = $this->themes::getConfig();
-        $themeVars   = $this->themes::getData();
+        $tmpVars   = $this->themes::getVars();
 
         $expectedCount = count($themeConfig['plugins'][$plugin]);
-        $this->assertEquals($expectedCount, count($themeVars['loaded_plugins']));
+        $this->assertEquals($expectedCount, count($tmpVars['loaded_plugins']));
     }
 
     public function testLoadNonExistPlugins()
@@ -252,34 +297,7 @@ final class ThemesTest extends TestCase
         $this->themes->loadPlugins($plugin);
     }
     
-    public function testRenderCss()
-    {
-        $config = new Arifrh\ThemesTest\Config\Themes();
-        
-        $this->themes = Themes::init($config);
-
-        $plugin = 'some-plugin';
-
-        $this->themes
-            ->addCSS('style.css')
-            ->addExternalCSS('http://example.org/css/other-style.css')
-            ->loadPlugins($plugin);
-
-        ob_start();
-        $this->themes::renderCSS();
-        $renderCSS = ob_get_contents();
-        @ob_end_clean();
-
-        $this->assertStringContainsString('/style.css', $renderCSS);
-        $this->assertStringContainsString('http://example.org/css/other-style.css', $renderCSS);
-
-       $pluginCss = $this->themes::getConfig()['plugins'][$plugin]['css'];
-
-       foreach($pluginCss as $css)
-       {
-           $this->assertStringContainsString($css, $renderCSS);
-       }
-    }
+    
 
     public function testRenderJs()
     {
@@ -372,4 +390,5 @@ final class ThemesTest extends TestCase
             $renderString
         );
     }
+    */
 }
