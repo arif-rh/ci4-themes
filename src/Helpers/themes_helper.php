@@ -116,7 +116,7 @@ if (! function_exists('plugin_url'))
  */
 function translate(string $file, array $langs = [])
 {
-	$contents = is_file($file) ? file_get_contents($file) : $file;
+	$contents = is_a_file($file) ? file_get_contents($file) : $file;
 
 	preg_match_all("/\{\{(.*?)\}\}/", $contents, $matches, PREG_PATTERN_ORDER);
 
@@ -124,9 +124,25 @@ function translate(string $file, array $langs = [])
 	{
 		foreach ($matches[1] as $match)
 		{
-			$contents = str_replace("{{{$match}}}", isset($langs[trim($match)]) ? $langs[trim($match)] : lang($match), $contents);
+			$contents = str_replace("{{{$match}}}", isset($langs[trim($match)]) ? $langs[trim($match)] : ('!!Missing translate for ' . $match . '!!'), $contents);
 		}
 	}
 
 	return $contents;
+}
+
+function is_a_file($file, $path = '')
+{
+	$yes = false;
+
+	if (filter_var($file, FILTER_VALIDATE_URL))
+	{
+		$yes = @fopen($file, 'r');
+	}
+	else
+	{
+		$yes = is_file($path . $file);
+	}
+
+	return $yes;
 }

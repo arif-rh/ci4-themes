@@ -207,16 +207,18 @@ class Themes
 	/**
 	 * add Js file(s) to be loaded inside template
 	 *
-	 * @param string|array   $jsFiles    
-	 * @param boolean        $isExternalOrInline wether the js file is local or external, or inline script
- 	 * @param integer        $priority           js priority order
+	 * @param string|array  $jsFiles    
+	 * @param boolean       $isExternalOrInline wether the js file is local or external, or inline script
+ 	 * @param integer       $priority           js priority order
+	 * @param mixed         $i18n               language translation for i18n js
+	 *
 	 *@return $this Arifrh\Themes\Themes
 	 */	
-	public function addJS($jsFiles, $isExternalOrInline = false, $priority = 0)
+	public function addJS($jsFiles, $isExternalOrInline = false, $priority = 0, $i18n = null)
 	{
 		if (is_string($jsFiles) && is_string($isExternalOrInline) && strtolower($isExternalOrInline) == 'inline')
 		{
-			return $this->addInlineJS($jsFiles, $priority);
+			return $this->addInlineJS($jsFiles, $priority, $i18n);
 		}
 
 		$jsFiles = is_array($jsFiles) ? $jsFiles : explode(',', $jsFiles);
@@ -279,10 +281,11 @@ class Themes
 	 *  
 	 * @param string  $inlineScript
  	 * @param integer $priority      js priority order
+	 * @param mixed   $i18n          language translation for i18n js
 	 * 
 	 * @return $this Arifrh\Themes\Themes
 	 */ 
-	public function addInlineJS($inlineScript, $priority = 0)
+	public function addInlineJS($inlineScript, $priority = 0, $i18n = null)
 	{
 		$js = trim($inlineScript);
 
@@ -291,6 +294,11 @@ class Themes
 			if (isset(self::$tmpVars['js'][$priority]))
 			{
 				ksort(self::$tmpVars['js']);
+			}
+
+			if (is_array($i18n))
+			{
+				$js = translate($js, $i18n);
 			}
 
 			self::$tmpVars['js'][$priority][] = [
@@ -330,45 +338,17 @@ class Themes
 		}
 
 		return false;
-	
-		self::renderExtraJs();
-	}
-
-	/**
-	 * Adding i18n JS to the template
-	 *  
-	 * @param string  $js_scripts
-	 * @param mixed[] $langs
-	 * 
-	 * @return $this Arifrh\Themes\Themes
-	 */ 
-	public function addI18nJS(string $js_scripts, array $langs = [])
-	{
-		helper('themes');
-
-		$js = trim($js_scripts);
-
-		if (!empty($js))
-		{
-			if (pathinfo($js, PATHINFO_EXTENSION) == 'js')
-			{
-				$js = FCPATH . self::$config[THEME_PATH] . '/' . self::$config[THEME] . '/' . self::$config[JS_PATH] . '/' . $js;
-			}
-
-			self::$tmpVars[self::INLINE_JS][sha1($js)] = translate($js, $langs);
-		}
-
-		return $this;
 	}
 
 	/**
 	 * Load Registered Plugins
 	 * 
 	 * @param string||array $plugins
+	 * @param integer       $priority
 	 * 
 	 * @return $this Arifrh\Themes\Themes
 	 */
-	public function loadPlugins($plugins)
+	public function loadPlugins($plugins, $priority = 0)
 	{
 		$plugins = is_array($plugins) ? $plugins : explode(',', $plugins);
 
@@ -376,14 +356,16 @@ class Themes
 		{
 			$plugin = trim($plugin);
 
-			if (!empty($plugin))
+			if (! empty($plugin))
 			{
-				if (!array_key_exists($plugin, self::$config['plugins']))
+				$registeredPlugins = setting()->get('Themes.plugins');
+
+				if (! array_key_exists($plugin, $registeredPlugins))
 				{
 					throw ThemesException::forPluginNotRegistered($plugin);
 				}
 
-				$this->loadPlugin($plugin);
+				$this->loadPlugin($plugin, $priority);
 			}
 		}
 
@@ -393,24 +375,32 @@ class Themes
 	/**
 	 * Load Each Plugin
 	 * 
-	 * @param string $plugin key of plugin
+	 * @param string   $plugin   key of plugin
+	 * @param integer  $priority
 	 */
-	protected function loadPlugin($plugin)
+	protected function loadPlugin($plugin, $priority = 0)
 	{
-		$plugin_url = self::$tmpVars['plugin_url'];
+		$registeredPlugins = setting()->get('Themes.plugins');
 
-		foreach(self::$config['plugins'][$plugin] as $type => $plugin_files)
+		foreach($registeredPlugins[$plugin] as $type => $pluginFiles)
 		{
-			foreach($plugin_files as $plugin_file)
+			foreach($pluginFiles as $theFile)
 			{
-				$plugin_path = str_replace(base_url(), FCPATH, $plugin_url);
+				$pluginUri = plugin_url($theFile);
 
-				if (!is_file($plugin_path . $plugin_file))
+				if (! is_file(str_replace(base_url(), FCPATH, $pluginUri)))
 				{
-					throw ThemesException::forPluginNotFound($plugin_file);
+					throw ThemesException::forPluginNotFound($theFile);
 				}
 
-				self::$tmpVars[self::LOADED_PLUGIN][$type][] = $plugin_url . $plugin_file;
+				if ($type == 'js')
+				{
+					$this->addJS($pluginUri, true, $priority);
+				}
+				else
+				{
+					$this->addCSS($pluginUri, true, $priority);
+				}
 			}
 		}
 	}

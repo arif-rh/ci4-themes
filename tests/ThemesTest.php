@@ -156,7 +156,7 @@ final class ThemesTest extends TestCase
         ];
 
         $this->assertSame($assetInlineJs, $tmpVars['js'][1]);
-   
+
         // add js from external source
         $js = "http://example.com/js/other-script.js";
 
@@ -169,6 +169,53 @@ final class ThemesTest extends TestCase
         ];
 
         $this->assertSame($assetJs, $tmpVars['js'][2]);
+    }
+
+    public function testRenderJsWithI18n()
+    {
+        // add inline js script with i18n
+        $inlineJs = "alert('Hello {{name}}!);";
+
+        $this->themes->addJS($inlineJs, 'inline', 9, [
+            'name' => 'Jhony',
+        ]);
+
+        ob_start();
+        $this->themes::renderJS();
+        $renderJS = ob_get_contents();
+        @ob_end_clean();
+
+        $this->assertStringContainsString('Hello Jhony!', $renderJS);
+    }
+    
+    public function testLoadPlugins()
+    {
+        $plugin = 'some-plugin'; // this plugin has one css and one js
+
+        $this->themes->loadPlugins($plugin);
+
+        $tmpVars = $this->themes::getVars();
+
+        $this->assertCount(1, $tmpVars['css'][0]);
+        $this->assertCount(1, $tmpVars['js'][0]);
+    }
+
+    public function testLoadNonExistPlugins()
+    {
+        $this->expectException(Arifrh\Themes\Exceptions\ThemesException::class);
+
+        $plugin = 'non-exist-plugin';
+
+        $this->themes->loadPlugins($plugin);
+    }
+
+    public function testLoadPluginsWithMissingFiles()
+    {
+        $this->expectException(Arifrh\Themes\Exceptions\ThemesException::class);
+
+        $plugin = 'other-plugin';
+
+        $this->themes->loadPlugins($plugin);
     }
 /*
     public function testSetHeader()
@@ -256,47 +303,7 @@ final class ThemesTest extends TestCase
         $themeConfig = $this->themes::getConfig();
 
         $this->assertEquals('custom', $themeConfig['theme']);
-    }
-
-    public function testLoadPlugins()
-    {
-        $config = new Arifrh\ThemesTest\Config\Themes();
-        
-        $this->themes = Themes::init($config);
-
-        $plugin = 'some-plugin';
-
-        $this->themes->loadPlugins($plugin);
-
-        $themeConfig = $this->themes::getConfig();
-        $tmpVars   = $this->themes::getVars();
-
-        $expectedCount = count($themeConfig['plugins'][$plugin]);
-        $this->assertEquals($expectedCount, count($tmpVars['loaded_plugins']));
-    }
-
-    public function testLoadNonExistPlugins()
-    {
-        $this->expectException(Arifrh\Themes\Exceptions\ThemesException::class);
-
-        $plugin = 'non-exist-plugin';
-
-        $this->themes->loadPlugins($plugin);
-    }
-
-    public function testLoadPluginsWithMissingFiles()
-    {
-        $this->expectException(Arifrh\Themes\Exceptions\ThemesException::class);
-
-        $config = new Arifrh\ThemesTest\Config\Themes();
-        
-        $this->themes = Themes::init($config);
-
-        $plugin = 'other-plugin';
-
-        $this->themes->loadPlugins($plugin);
-    }
-    
+    } 
     
 
     public function testRenderJs()
