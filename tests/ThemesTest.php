@@ -217,48 +217,69 @@ final class ThemesTest extends TestCase
 
         $this->themes->loadPlugins($plugin);
     }
-/*
-    public function testSetHeader()
+    
+    public function testSetFullpage()
     {
-        $custom_header = 'custom-header';
+        $tpl = setting()->get('Themes.templates');
 
-        $this->themes->setHeader($custom_header);
+        $this->assertFalse($tpl['fullpage']);
 
-        $themeConfig = $this->themes::getConfig();
+        $this->themes->setFullpage();
 
-        $this->assertEquals($custom_header, $themeConfig['header']);
+        $tpl = setting()->get('Themes.templates');
+
+        $this->assertTrue($tpl['fullpage']);
     }
 
-    public function testSetTemplate()
+    public function testSetHeader()
     {
-        $custom_template = 'custom-template';
+        $tpl = setting()->get('Themes.templates');
 
-        $this->themes->setTemplate($custom_template);
+        $this->assertSame('header', $tpl['header']);
 
-        $themeConfig = $this->themes::getConfig();
+        // after change
+        $customHeeader = 'custom-header';
 
-        $this->assertEquals($custom_template, $themeConfig['template']);
+        $this->themes->setHeader($customHeeader);
+
+        $tpl = setting()->get('Themes.templates');
+
+        $this->assertSame('custom-header', $tpl['header']);
+    }
+
+    public function testSetIndex()
+    {
+        $tpl = setting()->get('Themes.templates');
+
+        $this->assertSame('index', $tpl['index']);
+
+        // after change
+        $customIndex = 'custom-index';
+
+        $this->themes->setIndex($customIndex);
+
+        $tpl = setting()->get('Themes.templates');
+
+        $this->assertSame('custom-index', $tpl['index']);
     }
 
     public function testSetFooter()
     {
-        $custom_footer = 'custom-footer';
+        $tpl = setting()->get('Themes.templates');
 
-        $this->themes->setFooter($custom_footer);
+        $this->assertSame('footer', $tpl['footer']);
 
-        $themeConfig = $this->themes::getConfig();
+        // after change
+        $customFooter = 'custom-footer';
 
-        $this->assertEquals($custom_footer, $themeConfig['footer']);
+        $this->themes->setFooter($customFooter);
+
+        $tpl = setting()->get('Themes.templates');
+
+        $this->assertSame('custom-footer', $tpl['footer']);
     }
+/*
 
-    public function testUseFullTemplate()
-    {
-        $this->themes->useFullTemplate();
-
-        $themeConfig = $this->themes::getConfig();
-
-        $this->assertTrue($themeConfig['use_full_template']);
-    }
 
     public function testSetVar()
     {
@@ -287,55 +308,6 @@ final class ThemesTest extends TestCase
         $tmpVars = $this->themes::getVars();
 
         $this->assertEquals($page_title, $tmpVars[$this->themes::PAGE_TITLE]);
-    }
-
-    public function testUsingCustomConfig()
-    {
-        // before using custom config, it use default config
-        $themeConfig = $this->themes::getConfig();
-
-        $this->assertEquals('starter', $themeConfig['theme']);
-
-        $config = new Arifrh\ThemesTest\Config\Themes();
-        
-        $this->themes = Themes::init($config);
-
-        $themeConfig = $this->themes::getConfig();
-
-        $this->assertEquals('custom', $themeConfig['theme']);
-    } 
-    
-
-    public function testRenderJs()
-    {
-        $config = new Arifrh\ThemesTest\Config\Themes();
-        
-        $this->themes = Themes::init($config);
-
-        $inlineJs = "alert('OK');";
-        $plugin   = 'some-plugin';
-
-        $this->themes
-            ->addJS('script.js')
-            ->addInlineJs($inlineJs)
-            ->addExternalJS('http://example.org/css/other-script.js')
-            ->loadPlugins($plugin);
-
-        ob_start();
-        $this->themes::renderJS();
-        $renderJS = ob_get_contents();
-        @ob_end_clean();
-
-        $this->assertStringContainsString('/script.js', $renderJS);
-        $this->assertStringContainsString($inlineJs, $renderJS);
-        $this->assertStringContainsString('http://example.org/css/other-script.js', $renderJS);
-
-       $pluginJs = $this->themes::getConfig()['plugins'][$plugin]['js'];
-
-       foreach($pluginJs as $js)
-       {
-           $this->assertStringContainsString($js, $renderJS);
-       }
     }
 
     public function testRenderMissingTemplate()

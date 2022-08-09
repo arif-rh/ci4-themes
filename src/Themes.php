@@ -406,71 +406,69 @@ class Themes
 	}
 
 	/**
-	 * Wether themes used full template or not
+	 * Wether themes used fullpage template or not
 	 * 
-	 * @param boolean $use_full_template
+	 * @param boolean $fullpage
 	 * 
 	 * @return $this Arifrh\Themes\Themes
 	 */
-	public function useFullTemplate($use_full_template = true)
+	public function setFullpage($fullpage = true)
 	{
-		self::$config['use_full_template'] = $use_full_template;
+		$tplSetting = setting()->get('Themes.templates');
+
+		setting()->set('Themes.templates', array_merge( $tplSetting, [
+			'fullpage' => $fullpage,
+		]));
+		
+		return $this;
+	}
+
+	protected function changeTemplate($key, $value)
+	{
+		$tplSetting = setting()->get('Themes.templates');
+
+		setting()->set('Themes.templates', array_merge( $tplSetting, [
+			$key => $value,
+		]));
 
 		return $this;
 	}
 
 	/**
-	 * Set Header Template in the run-time
+	 * Set Header Template
 	 * 
-	 * @param string $header_name
+	 * @param string $headerName
 	 * 
 	 * @return $this Arifrh\Themes\Themes
 	 */
-	public function setHeader($header_name = null)
+	public function setHeader($headerName)
 	{
-		if (is_string($header_name))
-		{
-			self::$config[HEADER] = $header_name;
-		}
-
-		return $this;
+		return $this->changeTemplate('header', $headerName);
 	}
 
 	/**
-	 * Set Main Template in the run-time
+	 * Set Main index Template
 	 * 
-	 * @param string $template_name
+	 * @param string $indexName
 	 * 
 	 * @return $this Arifrh\Themes\Themes
 	 */
-	public function setTemplate($template_name = null)
+	public function setIndex($indexName)
 	{
-		if (is_string($template_name))
-		{
-			self::$config[TEMPLATE] = $template_name;
-		}
-
-		return $this;
+		return $this->changeTemplate('index', $indexName);
 	}
 
 	/**
-	 * Set Footer Template in the run-time
+	 * Set Footer Template
 	 * 
-	 * @param string $footer_name
+	 * @param string $footerName
 	 * 
 	 * @return $this Arifrh\Themes\Themes
 	 */
-	public function setFooter($footer_name = null)
+	public function setFooter($footerName = null)
 	{
-		if (is_string($footer_name))
-		{
-			self::$config[FOOTER] = $footer_name;
-		}
-
-		return $this;
+		return $this->changeTemplate('footer', $footerName);
 	}
-
-	
 
 	/**
 	 * Render view or plain text or html into template theme
