@@ -22,20 +22,15 @@ class Themes extends BaseConfig
 		];
 
     /**
-	 * Theme view Path
+	 * Namespaced used to locate the view theme files
 	 */
-	public $theme_path = APPPATH . 'Views/themes';
+	public $namespaceView = '\App\Views\themes';
     
 	/**
-	 * Theme templates
+	 * Main layout templates
+	 * will be located inside the ($namespaceView + themeName) directory
 	 */
-	public $templates = 
-		[
-			'header'   => 'header',
-			'footer'   => 'footer',
-			'index'    => 'index',
-			'fullpage' => false,
-		];
+	public $layout = 'main';
 
 	/**
 	 * Registered Plugins
