@@ -425,7 +425,9 @@ class Themes
 		$objTheme = self::$instance;
 		$objTheme->setvar($data);
 
-		$view = new \CodeIgniter\View\View();
+		$viewConfig = \Config\View();
+
+		$view = new \CodeIgniter\View\View($viewConfig);
 		$data = $objTheme::getVars();
 
 		$layout  = setting()->get('Themes.layout');
