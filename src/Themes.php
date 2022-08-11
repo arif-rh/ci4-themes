@@ -22,17 +22,7 @@ use Arifrh\Themes\Exceptions\ThemesException;
  * @package Arifrh\Themes
  */
 class Themes 
-{
-	/**
-	 * Constant of variable that will be used as page title inside template
-	 */
-	const PAGE_TITLE = 'page_title';
-
-	/**
-	 * Constant of variable that will be used as content inside template
-	 */
-	const CONTENT = 'content';
-	
+{	
 	/**
 	 * Themes instance 
 	 *
@@ -406,68 +396,17 @@ class Themes
 	}
 
 	/**
-	 * Wether themes used fullpage template or not
+	 * Set Layout Template
 	 * 
-	 * @param boolean $fullpage
-	 * 
-	 * @return $this Arifrh\Themes\Themes
-	 */
-	public function setFullpage($fullpage = true)
-	{
-		$tplSetting = setting()->get('Themes.templates');
-
-		setting()->set('Themes.templates', array_merge( $tplSetting, [
-			'fullpage' => $fullpage,
-		]));
-		
-		return $this;
-	}
-
-	protected function changeTemplate($key, $value)
-	{
-		$tplSetting = setting()->get('Themes.templates');
-
-		setting()->set('Themes.templates', array_merge( $tplSetting, [
-			$key => $value,
-		]));
-
-		return $this;
-	}
-
-	/**
-	 * Set Header Template
-	 * 
-	 * @param string $headerName
+	 * @param string $layoutName
 	 * 
 	 * @return $this Arifrh\Themes\Themes
 	 */
-	public function setHeader($headerName)
+	public function setLayout($layoutName)
 	{
-		return $this->changeTemplate('header', $headerName);
-	}
+		setting()->set('Themes.layout', $layoutName);
 
-	/**
-	 * Set Main index Template
-	 * 
-	 * @param string $indexName
-	 * 
-	 * @return $this Arifrh\Themes\Themes
-	 */
-	public function setIndex($indexName)
-	{
-		return $this->changeTemplate('index', $indexName);
-	}
-
-	/**
-	 * Set Footer Template
-	 * 
-	 * @param string $footerName
-	 * 
-	 * @return $this Arifrh\Themes\Themes
-	 */
-	public function setFooter($footerName = null)
-	{
-		return $this->changeTemplate('footer', $footerName);
+		return $this->setVar('layout', $layoutName);
 	}
 
 	/**
@@ -476,7 +415,7 @@ class Themes
 	 * @param string $viewPath
 	 * @param array  $data
 	 */
-	static function render($viewPath = null, $data = [])
+	public static function render($viewPath = null, $data = [])
 	{
 		if (is_null(self::$instance))
 		{
@@ -486,78 +425,43 @@ class Themes
 		$objTheme = self::$instance;
 		$objTheme->setvar($data);
 
-		if (!$objTheme->templateExist(self::$config[TEMPLATE]))
-		{
-			throw ThemesException::forMissingTemplateView(self::$config[TEMPLATE]);
-		}
+		$view = new \CodeIgniter\View\View();
+		$data = $objTheme::getVars();
 
-		$objTheme->setContent($viewPath, $objTheme::getVars());
+		$layout  = setting()->get('Themes.layout');
 
-		// use custom view using theme path
-		$view_config = Config('View');
-
-		$view = new \CodeIgniter\View\View($view_config, FCPATH . self::$config[THEME_PATH] . '/' . self::$config[THEME] . '/');
-
-		$view->setData($objTheme::getVars());
-
-		if (self::$config['use_full_template'])
-		{
-			echo $view->render(self::$config[TEMPLATE]);
-		}
-		else
-		{
-			if ($objTheme->templateExist(self::$config[HEADER]))
-			{
-				echo $view->render(self::$config[HEADER]);
-			}
-
-			echo $view->render(self::$config[TEMPLATE]);
-
-			if ($objTheme->templateExist(self::$config[FOOTER]))
-			{
-				echo $view->render(self::$config[FOOTER]);
-			}
-		}
+		echo $view->render($tpl['index'], $data, true);
 	}
 
 	/**
-	 * Render Inline JS
+	 * Change Namespace used for Views
+	 * 
+	 * @param string $namespace
+	 * 
+	 * @return $this Arifrh\Themes\Themes
 	 */
-	protected static function renderExtraJs()
+	public function setNamespaceView($namespace)
 	{
-		// proceed external js, if exist
-		if (array_key_exists(self::EXTERNAL_JS, self::$tmpVars))
-		{
-			foreach(self::$tmpVars[self::EXTERNAL_JS] as $js)
-			{
-				echo script_tag($js);
-			}
-		}
+		setting()->set('Themes.namespaceView', $namespace);
 
-		// proceed plugin js, if exist
-		if (array_key_exists(self::LOADED_PLUGIN, self::$tmpVars) && array_key_exists('js', self::$tmpVars[self::LOADED_PLUGIN]))
-		{
-			foreach(self::$tmpVars[self::LOADED_PLUGIN]['js'] as $js)
-			{
-				echo script_tag($js);
-			}
-		}
+		return $this;
 	}
 
 	/**
- 	* Check does template exist 
- 	* 
- 	* @param string $template
- 	* 
- 	* @return boolean
- 	*/
-	protected function templateExist($template = null)
+	 * Get full Namespace Views
+	 * 
+	 * @param string $view
+	 * 
+	 * @return $string
+	 */
+	public function getNamespaceView($view)
 	{
-		helper('themes');
-
-		return is_file(FCPATH . self::$config[THEME_PATH] . '/' . self::$config[THEME] . '/' . validate_ext($template));
+		return implode('\'', [
+			setting()->get('Themes.namespaceView'),
+			setting()->get('Themes.name'),
+		]) . '\\' . $view;
 	}
-
+	
 	/**
 	 * Set Main Content
 	 * 
@@ -591,34 +495,27 @@ class Themes
 	}
 
 	/**
-	 * Set Page Title - used in <title> tags
+	 * Generate Auto Page Title (can be used in <title> tags)
 	 * 
-	 * @param string $page_title
+	 * @param string $titleVar variable name will be used to save the page title
+	 * 
 	 */
-	public function setPageTitle($page_title = null)
+	public function setAutoPageTitle($titleVar = 'pageTitle')
 	{
-		$_page_title = '';
+		$pageTitle = '';
 
-		if (is_string($page_title))
+		if (! array_key_exists($titleVar, self::$tmpVars) && ! is_cli()) 
 		{
-			$_page_title = $page_title;
-		}
-		elseif (is_array($page_title) && array_key_exists(self::PAGE_TITLE, $page_title))
-		{
-			$_page_title = $page_title[self::PAGE_TITLE];
-		}
-		elseif (!array_key_exists(self::PAGE_TITLE, self::$tmpVars) && !is_cli()) 
-		{
-			// page_title is not defined, so detect current controller/method as page title
+			// detect current controller/method as page title
 			$router = service('router');
 		
 			$controllers = explode('\\', $router->controllerName());
 			$controller  = $controllers[count($controllers)-1];
 
-			$_page_title = ($controller . ' | ' . ucfirst($router->methodName()));
+			$pageTitle = ($controller . ' | ' . ucfirst($router->methodName()));
 		}
 
-		$this->setVar(self::PAGE_TITLE, $_page_title);
+		$this->setVar($$titleVar, $pageTitle);
 
 		return $this;
 	}
