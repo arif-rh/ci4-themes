@@ -85,7 +85,7 @@ class Setup extends BaseCommand
         $file     = 'Config/Themes.php';
         $replaces = [
             'namespace Arifrh\\Themes\\Config'     => 'namespace Config',
-            'use CodeIgniter\\Config\\BaseConfig;' => 'use Arifrh\\Themes\\Config as ThemesConfig;',
+            'use CodeIgniter\\Config\\BaseConfig;' => 'use Arifrh\\Themes\\Config\\Themes as ThemesConfig;',
             'extends BaseConfig'                   => 'extends ThemesConfig',
         ];
 

@@ -100,13 +100,31 @@ class Helper
 
 		foreach ($iterator as $file) 
         {
+            $dir = $dst . '/' . $iterator->getSubPathName();
+
 			if ($file->isDir())
 			{
-				mkdir($dst . '/' . $iterator->getSubPathName());
+                if (! is_dir($dir))
+		        { 
+				    mkdir($dir);
+                }
 			} 
 			else
 			{
-				copy($file, $dst . '/' . $iterator->getSubPathName());
+                if (file_exists($file)) {
+                    $overwrite = (bool) CLI::getOption('f');
+        
+                    if (
+                        ! $overwrite
+                        && CLI::prompt("  File '" . $file . "' already exists in destination. Overwrite?", ['n', 'y']) === 'n'
+                    ) {
+                        CLI::error("  Skipped " . $file . ". If you wish to overwrite, please use the '-f' option or reply 'y' to the prompt.");
+        
+                        return;
+                    }
+                }
+
+				copy($file, $dir);
 			}
 		}
 	}
