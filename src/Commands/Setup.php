@@ -66,8 +66,6 @@ class Setup extends BaseCommand
 
     protected $publicPath = FCPATH;
 
-    private ContentReplacer $replacer;
-
     /**
      * Displays the help for the spark cli script itself.
      */
@@ -96,37 +94,6 @@ class Setup extends BaseCommand
     {
         Helper::recursiveCopy("{$this->sourcePath}/Views/themes", "{$this->viewPath}/themes");
         Helper::recursiveCopy("{$this->sourcePath}/public/themes", "{$this->publicPath}/themes");
-    }
-
-    /**
-     * @param string $code Code to add.
-     * @param string $file Relative file path like 'Controllers/BaseController.php'.
-     */
-    protected function add(string $file, string $code, string $pattern, string $replace): void
-    {
-        $path      = $this->distPath . $file;
-        $cleanPath = clean_path($path);
-
-        $content = file_get_contents($path);
-
-        $output = $this->replacer->add($content, $code, $pattern, $replace);
-
-        if ($output === true) {
-            CLI::error("  Skipped {$cleanPath}. It has already been updated.");
-
-            return;
-        }
-        if ($output === false) {
-            CLI::error("  Error checking {$cleanPath}.");
-
-            return;
-        }
-
-        if (write_file($path, $output)) {
-            CLI::write(CLI::color('  Updated: ', 'green') . $cleanPath);
-        } else {
-            CLI::error("  Error updating {$cleanPath}.");
-        }
     }
 
     private function runMigrations(): void

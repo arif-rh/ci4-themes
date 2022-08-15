@@ -12,13 +12,13 @@ class Themes extends BaseConfig
     /**
 	 * Public Assets directory
 	 */
-	public $public_assets = 
+	public $publicDir = 
 		[
 			'theme_dir'  => 'themes',
+			'common_dir' => 'common',
 			'css_dir'    => 'css',
 			'js_dir'     => 'js',
 			'image_dir'  => 'images',
-			'plugin_dir' => 'plugins',
 		];
 
     /**

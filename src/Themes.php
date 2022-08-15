@@ -81,20 +81,23 @@ class Themes
 			setting()->set('Themes.name', $themeName, $context);
 		}
 
-		$publicAssets = setting()->get('Themes.public_assets');
-		$themeDir     = $publicAssets['theme_dir'];
-		$cssDir       = $publicAssets['css_dir'];
-		$jsDir        = $publicAssets['js_dir'];
-		$imageDir     = $publicAssets['image_dir'];
-		$pluginDir    = $publicAssets['plugin_dir'];
+		$publicDir = setting()->get('Themes.publicDir');
+
+		$themeDir     = $publicDir['theme_dir'];
+		$cssDir       = $publicDir['css_dir'];
+		$jsDir        = $publicDir['js_dir'];
+		$imageDir     = $publicDir['image_dir'];
+		$commonDir    = $publicDir['common_dir'];
 		$themeURL     = base_url($themeDir . '/' . $themeName) . '/';
+		$pluginURL    = base_url($themeDir . '/' . $commonDir) . '/';
 
 		self::$instance->setVar([
+			'theme_name' => $themeName,
 			'theme_url'  => $themeURL,
 			'css_url'    => $themeURL . $cssDir . '/',
 			'js_url'     => $themeURL . $jsDir . '/',
 			'image_url'  => $themeURL . $imageDir . '/',
-			'plugin_url' => $themeURL . $pluginDir . '/',
+			'plugin_url' => $pluginURL,
 		]);
 
 		return $this;
@@ -410,29 +413,36 @@ class Themes
 	}
 
 	/**
-	 * Render view or plain text or html into template theme
+	 * Render view into main layout template
 	 * 
-	 * @param string $viewPath
-	 * @param array  $data
+	 * @param string      $viewPath
+	 * @param array|null  $data
+	 * @param boolean     $autoUseLayout  default = true, themes will render view to pre-defined layout
 	 */
-	public static function render($viewPath = null, $data = [])
+	public static function render($viewPath = null, $data = null, $autoUseLayout = true)
 	{
 		if (is_null(self::$instance))
 		{
 			self::init();
 		}
-		
+
 		$objTheme = self::$instance;
 		$objTheme->setvar($data);
 
-		$viewConfig = \Config\View();
-
-		$view = new \CodeIgniter\View\View($viewConfig);
 		$data = $objTheme::getVars();
 
-		$layout  = setting()->get('Themes.layout');
+		$viewConfig = config('View');
 
-		echo $view->render($tpl['index'], $data, true);
+		$view = new \CodeIgniter\View\View($viewConfig);
+		$view->setData($data);
+
+		if ($autoUseLayout)
+		{
+			$layoutName  = setting()->get('Themes.layout');
+			$view->extend($objTheme->getNamespaceView($layoutName));
+		}
+
+		echo $view->render($viewPath, null, true);
 	}
 
 	/**
@@ -458,44 +468,12 @@ class Themes
 	 */
 	public function getNamespaceView($view)
 	{
-		return implode('\'', [
+		return implode('\\', [
 			setting()->get('Themes.namespaceView'),
 			setting()->get('Themes.name'),
 		]) . '\\' . $view;
 	}
 	
-	/**
-	 * Set Main Content
-	 * 
-	 * @param string $viewPath
-	 * @param array  $data
-	 */
-	protected function setContent($viewPath = null, $data = [], $viewDir = 'Views')
-	{
-		$content = "";
-
-		if (is_string($viewPath))
-		{
-			$content = $viewPath; 
-		}
-
-		if (!empty($viewPath))
-		{
-			$fileExt = pathinfo($viewPath, PATHINFO_EXTENSION);
-
-			$locator = \Config\Services::locator();
-			$view    = $locator->locateFile($viewPath, $viewDir, empty($fileExt) ? 'php' : $fileExt);
-
-			if (!empty($view))
-			{
-				$content = view($viewPath, $data);
-			}
-		}
-
-		$this->setVar(self::CONTENT, $content);
-		$this->setPageTitle($data);
-	}
-
 	/**
 	 * Generate Auto Page Title (can be used in <title> tags)
 	 * 

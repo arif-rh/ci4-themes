@@ -218,80 +218,18 @@ final class ThemesTest extends TestCase
         $this->themes->loadPlugins($plugin);
     }
     
-    public function testSetFullpage()
-    {
-        $tpl = setting()->get('Themes.templates');
-
-        $this->assertFalse($tpl['fullpage']);
-
-        $this->themes->setFullpage();
-
-        $tpl = setting()->get('Themes.templates');
-
-        $this->assertTrue($tpl['fullpage']);
-    }
-
-    public function testSetHeader()
-    {
-        $tpl = setting()->get('Themes.templates');
-
-        $this->assertSame('header', $tpl['header']);
-
-        // after change
-        $customHeeader = 'custom-header';
-
-        $this->themes->setHeader($customHeeader);
-
-        $tpl = setting()->get('Themes.templates');
-
-        $this->assertSame('custom-header', $tpl['header']);
-    }
-
-    public function testSetIndex()
-    {
-        $tpl = setting()->get('Themes.templates');
-
-        $this->assertSame('index', $tpl['index']);
-
-        // after change
-        $customIndex = 'custom-index';
-
-        $this->themes->setIndex($customIndex);
-
-        $tpl = setting()->get('Themes.templates');
-
-        $this->assertSame('custom-index', $tpl['index']);
-    }
-
-    public function testSetFooter()
-    {
-        $tpl = setting()->get('Themes.templates');
-
-        $this->assertSame('footer', $tpl['footer']);
-
-        // after change
-        $customFooter = 'custom-footer';
-
-        $this->themes->setFooter($customFooter);
-
-        $tpl = setting()->get('Themes.templates');
-
-        $this->assertSame('custom-footer', $tpl['footer']);
-    }
-/*
-
-
     public function testSetVar()
     {
-        $package_name = "ci4-themes";
+        $packageName = "ci4-themes";
 
-        $this->themes->setVar('package_name', $package_name);
+        $this->themes->setVar('packageName', $packageName);
 
         $tmpVars = $this->themes::getVars();
 
-        $this->assertEquals($package_name, $tmpVars['package_name']);
+        $this->assertEquals($packageName, $tmpVars['packageName']);
     }
 
+    /*
     public function testSetPageTitle()
     {
         $page_title = "Test Page Title";
@@ -316,37 +254,6 @@ final class ThemesTest extends TestCase
 
         $this->themes->setTemplate('non-exist-template');
 		$this->themes::render('This will never be rendered');
-    }
-
-    public function testRenderString()
-    {
-        $expected = "Hello World!";
-
-        ob_start();
-		$this->themes::render($expected);
-		$renderString = ob_get_contents();
-        @ob_end_clean();
-        
-        $this->assertStringContainsString(
-            $expected,
-            $renderString
-        );
-    }
-
-    public function testRenderUsingFullTemplate()
-    {
-        $expected = "Login Page";
-
-        ob_start();
-        $this->themes->useFullTemplate();
-		$this->themes::render($expected);
-		$renderString = ob_get_contents();
-        @ob_end_clean();
-        
-        $this->assertStringContainsString(
-            $expected,
-            $renderString
-        );
     }
 
     public function testRenderView()
