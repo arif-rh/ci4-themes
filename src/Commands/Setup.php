@@ -93,7 +93,7 @@ class Setup extends BaseCommand
     private function publishDefaultThemes(): void
     {
         Helper::recursiveCopy("{$this->sourcePath}/Views/themes", "{$this->viewPath}/themes");
-        Helper::recursiveCopy("{$this->sourcePath}/public/themes", "{$this->publicPath}/themes");
+        Helper::recursiveCopy("{$this->sourcePath}/../public/themes", "{$this->publicPath}/themes");
     }
 
     private function runMigrations(): void
