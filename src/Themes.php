@@ -439,7 +439,7 @@ class Themes
 		if ($autoUseLayout)
 		{
 			$layoutName  = setting()->get('Themes.layout');
-			$view->extend($objTheme->getNamespaceView($layoutName));
+			$view->extend($objTheme::getNamespaceView($layoutName));
 		}
 
 		echo $view->render($viewPath, null, true);
@@ -466,7 +466,7 @@ class Themes
 	 * 
 	 * @return $string
 	 */
-	public function getNamespaceView($view)
+	public static function getNamespaceView($view)
 	{
 		return implode('\\', [
 			setting()->get('Themes.namespaceView'),

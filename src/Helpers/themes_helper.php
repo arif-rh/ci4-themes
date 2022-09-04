@@ -40,6 +40,17 @@ if (! function_exists('validate_ext'))
 // @codeCoverageIgnoreStart
 }
 
+if (! function_exists('theme_view'))
+{
+// @codeCoverageIgnoreEnd
+	// return full namespace theme view
+	function theme_view($view)
+	{
+		return Arifrh\Themes\Themes::getNamespaceView($view);
+	}
+// @codeCoverageIgnoreStart
+}
+
 if (! function_exists('theme_url'))
 {
 // @codeCoverageIgnoreEnd
