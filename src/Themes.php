@@ -433,7 +433,7 @@ class Themes
 
 		$viewConfig = config('View');
 
-		$view = new \CodeIgniter\View\View($viewConfig);
+		$view = new \CodeIgniter\View\View($viewConfig, '');
 		$view->setData($data);
 
 		if ($autoUseLayout)
